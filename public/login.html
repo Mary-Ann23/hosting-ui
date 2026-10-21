@@ -1,0 +1,474 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login | JABIÑAR FOOD STORE</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #f4edff, #e8dcff, #fff4fa);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #302344;
+    }
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .brand-logo {
+      width: 76px;
+      height: 76px;
+      border-radius: 24px;
+      margin: 0 auto 14px;
+      background: linear-gradient(135deg, #8b5cf6, #c084fc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 27px;
+      font-weight: 800;
+      box-shadow: 0 10px 25px #8b5cf633;
+    }
+
+    .brand h1 {
+      font-size: 25px;
+      margin-bottom: 8px;
+    }
+
+    .brand p {
+      font-size: 14px;
+      color: #796b8d;
+    }
+
+    .login-card {
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #ffffff;
+      border-radius: 24px;
+      padding: 28px 24px;
+      box-shadow: 0 18px 50px #56358015;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      background: #f5f0fc;
+      padding: 5px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+    }
+
+    .tab {
+      flex: 1;
+      border: none;
+      padding: 12px 8px;
+      border-radius: 9px;
+      background: transparent;
+      color: #78688c;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: white;
+      color: #7c3aed;
+      box-shadow: 0 2px 8px #4c287710;
+    }
+
+    .form-title {
+      font-size: 23px;
+      margin-bottom: 7px;
+    }
+
+    .form-description {
+      color: #887a98;
+      font-size: 13px;
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    .field {
+      margin-bottom: 17px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .field input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #e5dced;
+      border-radius: 12px;
+      outline: none;
+      background: #fff;
+      font-size: 14px;
+      color: #302344;
+    }
+
+    .field input:focus {
+      border-color: #9b70ef;
+      box-shadow: 0 0 0 3px #9b70ef18;
+    }
+
+    .password-wrap {
+      position: relative;
+    }
+
+    .password-wrap input {
+      padding-right: 68px;
+    }
+
+    .show-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      border: none;
+      background: transparent;
+      color: #7c3aed;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    .submit-btn {
+      width: 100%;
+      border: none;
+      padding: 15px;
+      border-radius: 12px;
+      color: white;
+      background: linear-gradient(135deg, #8b5cf6, #a855f7);
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 5px;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      display: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .message.error {
+      display: block;
+      background: #fff0f0;
+      color: #b42318;
+    }
+
+    .message.success {
+      display: block;
+      background: #ecfdf3;
+      color: #087443;
+    }
+
+    .footer-text {
+      text-align: center;
+      font-size: 12px;
+      color: #94869f;
+      margin-top: 22px;
+      line-height: 1.7;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 380px) {
+      .login-card {
+        padding: 23px 18px;
+      }
+
+      .brand h1 {
+        font-size: 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="login-wrapper">
+    <header class="brand">
+      <div class="brand-logo">JF</div>
+      <h1>JABIÑAR FOOD STORE</h1>
+      <p>Good food, happy mood. 💜</p>
+    </header>
+
+    <section class="login-card">
+      <div class="tabs">
+        <button type="button" class="tab active" id="loginTab">
+          Log in
+        </button>
+        <button type="button" class="tab" id="registerTab">
+          Create Account
+        </button>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+
+      <!-- LOGIN FORM -->
+      <form id="loginForm">
+        <h2 class="form-title">Welcome back!</h2>
+        <p class="form-description">
+          Log in to order your favorite food.
+        </p>
+
+        <div class="field">
+          <label for="loginUsername">Username</label>
+          <input
+            type="text"
+            id="loginUsername"
+            name="username"
+            placeholder="Enter your username"
+            autocomplete="username"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <div class="password-wrap">
+            <input
+              type="password"
+              id="loginPassword"
+              name="password"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+              required
+            >
+            <button
+              type="button"
+              class="show-password"
+              data-toggle="loginPassword"
+            >Show</button>
+          </div>
+        </div>
+
+        <button class="submit-btn" type="submit" id="loginButton">
+          Log in
+        </button>
+      </form>
+
+      <!-- REGISTER FORM -->
+      <form id="registerForm" class="hidden">
+        <h2 class="form-title">Create your account</h2>
+        <p class="form-description">
+          Join us and enjoy ordering your favorite food.
+        </p>
+
+        <div class="field">
+          <label for="fullName">Full Name</label>
+          <input
+            type="text"
+            id="fullName"
+            name="full_name"
+            placeholder="Enter your full name"
+            autocomplete="name"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label for="registerUsername">Username</label>
+          <input
+            type="text"
+            id="registerUsername"
+            name="username"
+            placeholder="Choose a username"
+            autocomplete="username"
+            minlength="3"
+            required
+          >
+        </div>
+
+        <div class="field">
+          <label for="registerPassword">Password</label>
+          <div class="password-wrap">
+            <input
+              type="password"
+              id="registerPassword"
+              name="password"
+              placeholder="Create a password"
+              autocomplete="new-password"
+              minlength="8"
+              required
+            >
+            <button
+              type="button"
+              class="show-password"
+              data-toggle="registerPassword"
+            >Show</button>
+          </div>
+        </div>
+
+        <button class="submit-btn" type="submit" id="registerButton">
+          Create Account
+        </button>
+      </form>
+    </section>
+
+    <p class="footer-text">
+      © 2026 JABIÑAR FOOD STORE<br>
+      Fresh food, friendly service.
+    </p>
+  </main>
+
+  <script>
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    const loginTab = document.getElementById("loginTab");
+    const registerTab = document.getElementById("registerTab");
+    const message = document.getElementById("message");
+
+    function showMessage(text, type = "error") {
+      message.textContent = text;
+      message.className = "message " + type;
+    }
+
+    function clearMessage() {
+      message.textContent = "";
+      message.className = "message";
+    }
+
+    loginTab.addEventListener("click", () => {
+      loginForm.classList.remove("hidden");
+      registerForm.classList.add("hidden");
+      loginTab.classList.add("active");
+      registerTab.classList.remove("active");
+      clearMessage();
+    });
+
+    registerTab.addEventListener("click", () => {
+      registerForm.classList.remove("hidden");
+      loginForm.classList.add("hidden");
+      registerTab.classList.add("active");
+      loginTab.classList.remove("active");
+      clearMessage();
+    });
+
+    document.querySelectorAll("[data-toggle]").forEach(button => {
+      button.addEventListener("click", () => {
+        const field = document.getElementById(button.dataset.toggle);
+        const isHidden = field.type === "password";
+
+        field.type = isHidden ? "text" : "password";
+        button.textContent = isHidden ? "Hide" : "Show";
+      });
+    });
+
+    async function sendRequest(url, form) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        credentials: "include",
+        body: JSON.stringify(
+          Object.fromEntries(new FormData(form).entries())
+        )
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || "Request failed. Please try again.");
+      }
+
+      return data;
+    }
+
+    loginForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      clearMessage();
+
+      const button = document.getElementById("loginButton");
+      button.disabled = true;
+      button.textContent = "Logging in...";
+
+      try {
+        const data = await sendRequest("/api/auth/login", loginForm);
+
+        if (!data.user) {
+          throw new Error("The server did not return a user account.");
+        }
+
+        showMessage("Login successful! Opening your store...", "success");
+
+        window.location.replace("/");
+      } catch (error) {
+        showMessage(
+          error.message === "Failed to fetch"
+            ? "Cannot connect to the server. Please check your internet connection."
+            : error.message
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = "Log in";
+      }
+    });
+
+    registerForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      clearMessage();
+
+      const button = document.getElementById("registerButton");
+      button.disabled = true;
+      button.textContent = "Creating account...";
+
+      try {
+        await sendRequest("/api/auth/register", registerForm);
+
+        showMessage(
+          "Account created! You can now log in.",
+          "success"
+        );
+
+        registerForm.reset();
+        loginForm.reset();
+        loginTab.click();
+      } catch (error) {
+        showMessage(
+          error.message === "Failed to fetch"
+            ? "Cannot connect to the server. Please check your internet connection."
+            : error.message
+        );
+      } finally {
+        button.disabled = false;
+        button.textContent = "Create Account";
+      }
+    });
+  </script>
+</body>
+  </html>
+  

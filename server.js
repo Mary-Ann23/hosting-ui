@@ -354,7 +354,339 @@ app.get("/api/products", requireAuth, async (req, res) => {
     });
   }
 });
+const crypto = require("crypto");
 
+async function createOrder(client, userId, body, paymentMethod) {
+  const fullName = String(body.full_name || "").trim();
+  const contactNumber = String(body.contact_number || "").trim();
+  const address = String(body.address || "").trim();
+  const instructions = String(body.instructions || "").trim();
+  const items = body.items;
+
+  if (!fullName || !contactNumber || !address) {
+    throw new Error("Please complete your delivery details.");
+  }
+
+  if (
+    !Array.isArray(items) ||
+    items.length === 0 ||
+    items.length > 50
+  ) {
+    throw new Error("Your cart is empty or invalid.");
+  }
+
+  const quantities = new Map();
+
+  for (const item of items) {
+    const id = Number(item.product_id);
+    const quantity = Number(item.quantity);
+
+    if (
+      !Number.isSafeInteger(id) ||
+      id < 1 ||
+      !Number.isSafeInteger(quantity) ||
+      quantity < 1 ||
+      quantity > 100
+    ) {
+      throw new Error("Invalid product or quantity.");
+    }
+
+    quantities.set(id, (quantities.get(id) || 0) + quantity);
+  }
+
+  const ids = [...quantities.keys()];
+
+  const productResult = await client.query(
+    `SELECT id, name, price, stock
+     FROM products
+     WHERE id = ANY($1::int[])`,
+    [ids]
+  );
+
+  if (productResult.rows.length !== ids.length) {
+    throw new Error("One or more products are unavailable.");
+  }
+
+  const products = new Map(
+    productResult.rows.map(product => [
+      Number(product.id),
+      product
+    ])
+  );
+
+  let total = 0;
+  const orderItems = [];
+
+  for (const [id, quantity] of quantities) {
+    const product = products.get(id);
+    const price = Number(product.price);
+
+    if (!Number.isFinite(price) || price < 0) {
+      throw new Error("Invalid product price.");
+    }
+
+    if (Number(product.stock) < quantity) {
+      throw new Error(`${product.name} does not have enough stock.`);
+    }
+
+    total += price * quantity;
+
+    orderItems.push({
+      id,
+      name: product.name,
+      quantity,
+      price
+    });
+  }
+
+  total = Math.round((total + Number.EPSILON) * 100) / 100;
+
+  const orderResult = await client.query(
+    `INSERT INTO orders (
+       user_id, total_amount, payment_method,
+       payment_status, order_status,
+       full_name, contact_number,
+       delivery_address, delivery_instructions
+     )
+     VALUES ($1, $2, $3, 'PENDING', 'PENDING', $4, $5, $6, $7)
+     RETURNING id, total_amount, payment_method,
+               payment_status, order_status, created_at`,
+    [
+      userId,
+      total,
+      paymentMethod,
+      fullName,
+      contactNumber,
+      address,
+      instructions
+    ]
+  );
+
+  const order = orderResult.rows[0];
+
+  for (const item of orderItems) {
+    await client.query(
+      `INSERT INTO order_items (
+         order_id, product_id, product_name, quantity, price
+       )
+       VALUES ($1, $2, $3, $4, $5)`,
+      [order.id, item.id, item.name, item.quantity, item.price]
+    );
+  }
+
+  return {
+    order,
+    orderItems,
+    total
+  };
+}
+
+async function createOrderTransaction(userId, body, method) {
+  const pool = getPool();
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await createOrder(
+      client,
+      userId,
+      body,
+      method
+    );
+
+    await client.query("COMMIT");
+    return result;
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+    }
+app.post("/api/orders", requireAuth, async (req, res) => {
+  try {
+    const result = await createOrderTransaction(
+      req.session.user.id,
+      req.body,
+      "COD"
+    );
+
+    return res.status(201).json({
+      success: true,
+      message: "Cash on Delivery order placed successfully.",
+      order: result.order
+    });
+  } catch (error) {
+    console.error("COD order error:", error.message);
+
+    return res.status(400).json({
+      success: false,
+      message: error.message || "Unable to place your order."
+    });
+  }
+});
+app.post("/api/checkout/maya", requireAuth, async (req, res) => {
+  let orderId;
+
+  try {
+    const publicKey = process.env.MAYA_PUBLIC_KEY;
+    const baseUrl = process.env.MAYA_BASE_URL;
+    const appUrl = process.env.APP_BASE_URL;
+
+    if (!publicKey || !baseUrl || !appUrl) {
+      return res.status(503).json({
+        success: false,
+        message: "Maya Sandbox is not fully configured."
+      });
+    }
+
+    if (!baseUrl.startsWith("https://pg-sandbox.paymaya.com")) {
+      return res.status(503).json({
+        success: false,
+        message: "Maya Sandbox URL is invalid."
+      });
+    }
+
+    const created = await createOrderTransaction(
+      req.session.user.id,
+      req.body,
+      "MAYA"
+    );
+
+    orderId = created.order.id;
+
+    const requestReferenceNumber =
+      `JFS-${orderId}-${crypto.randomUUID()}`.slice(0, 36);
+
+    const items = created.orderItems.map(item => ({
+      name: item.name,
+      quantity: item.quantity,
+      amount: {
+        value: Number(item.price.toFixed(2))
+      },
+      totalAmount: {
+        value: Number(
+          (item.price * item.quantity).toFixed(2)
+        )
+      }
+    }));
+
+    const payload = {
+      totalAmount: {
+        value: Number(created.total.toFixed(2)),
+        currency: "PHP"
+      },
+      items,
+      requestReferenceNumber,
+      redirectUrl: {
+        success: `${appUrl}/?maya=success`,
+        failure: `${appUrl}/?maya=failure`,
+        cancel: `${appUrl}/?maya=cancel`
+      }
+    };
+
+    const auth = Buffer
+      .from(`${publicKey}:`)
+      .toString("base64");
+
+    const response = await fetch(
+      `${baseUrl}/checkout/v1/checkouts`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok || !data.redirectUrl) {
+      console.error("Maya create checkout failed:", {
+        status: response.status,
+        message: data.message
+      });
+
+      return res.status(502).json({
+        success: false,
+        message: "Unable to create Maya checkout. Please try again."
+      });
+    }
+
+    await getPool().query(
+      `UPDATE orders
+       SET maya_checkout_id = $1
+       WHERE id = $2 AND user_id = $3`,
+      [
+        data.checkoutId || data.id,
+        orderId,
+        req.session.user.id
+      ]
+    );
+
+    return res.json({
+      success: true,
+      order: created.order,
+      checkoutUrl: data.redirectUrl
+    });
+  } catch (error) {
+    console.error("Maya checkout error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Unable to start Maya checkout."
+    });
+  }
+});
+app.get("/api/orders", requireAuth, async (req, res) => {
+  try {
+    const result = await getPool().query(
+      `SELECT
+         o.id,
+         o.total_amount,
+         o.payment_method,
+         o.payment_status,
+         o.order_status,
+         o.created_at,
+         o.full_name,
+         o.contact_number,
+         o.delivery_address,
+         COALESCE(
+           json_agg(
+             json_build_object(
+               'product_id', oi.product_id,
+               'product_name', oi.product_name,
+               'quantity', oi.quantity,
+               'price', oi.price
+             )
+           ) FILTER (WHERE oi.id IS NOT NULL),
+           '[]'::json
+         ) AS items
+       FROM orders o
+       LEFT JOIN order_items oi ON oi.order_id = o.id
+       WHERE o.user_id = $1
+       GROUP BY o.id
+       ORDER BY o.created_at DESC`,
+      [req.session.user.id]
+    );
+
+    return res.json({
+      success: true,
+      orders: result.rows
+    });
+  } catch (error) {
+    console.error("My Orders error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to load your orders."
+    });
+  }
+});
 // Serve CSS, JavaScript, images and other public assets.
 // Do not automatically serve index.html.
 app.use(

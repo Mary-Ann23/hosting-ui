@@ -2,6 +2,7 @@
 
 const express = require("express");
 const path = require("path");
+const { getPool } = require("./db");
 require("dotenv").config();
 
 const { testDatabase } = require("./modules");

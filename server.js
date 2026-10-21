@@ -3,29 +3,42 @@ const express = require("express");
 const path = require("path");
 require("dotenv").config();
 
+const { testDatabase } = require("./modules");
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Serve the website files
 app.use(express.static(path.join(__dirname, "public")));
 
-// Test API
 app.get("/api/status", (req, res) => {
   res.json({
     success: true,
-    message: "Hosting UI API is running!",
-    server: "Node.js"
+    message: "Node.js API is running!"
   });
 });
 
-// Home page
+app.get("/api/database-status", async (req, res) => {
+  try {
+    await testDatabase();
+    res.json({
+      success: true,
+      message: "MySQL connected successfully!"
+    });
+  } catch (error) {
+    console.error("Database connection failed:", error.message);
+    res.status(503).json({
+      success: false,
+      message: "Database connection is not ready."
+    });
+  }
+});
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server started on port " + PORT);
 });

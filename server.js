@@ -1,6 +1,4 @@
 
-
-
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
@@ -270,7 +268,7 @@ app.post("/api/auth/login", async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Unable to log in right now."
+      message: "Enable to log in right now."
     });
   }
 });
@@ -283,7 +281,7 @@ app.post("/api/auth/logout", (req, res) => {
 
       return res.status(500).json({
         success: false,
-        message: "Unable to log out."
+        message: "Enable to log out."
       });
     }
 

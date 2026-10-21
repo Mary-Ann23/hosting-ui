@@ -959,9 +959,6 @@ document.addEventListener("keydown", (event) => {
    START WEBSITE
 ========================= */
 
-updateCartCount();
-loadProducts();
-
 async function checkLoginStatus() {
   const accountButton = $("#accountButton");
 
@@ -982,5 +979,7 @@ async function checkLoginStatus() {
     }
   }
 }
-          
+  updateCartCount();
+checkLoginStatus();
+loadProducts();        
             

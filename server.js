@@ -37,9 +37,9 @@ app.get("/api/database-status", async (req, res) => {
   }
 });
 
+
 app.get("/api/products", async (req, res) => {
   try {
-    const { getPool } = require("./db");
     const db = getPool();
 
     const result = await db.query(`
@@ -58,10 +58,11 @@ app.get("/api/products", async (req, res) => {
 
     res.status(500).json({
       success: false,
-      message: "Unable to load products."
+      message: error.message
     });
   }
 });
+                                  
                   
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));

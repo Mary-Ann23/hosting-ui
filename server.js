@@ -1,4 +1,5 @@
 
+
 const express = require("express");
 const path = require("path");
 require("dotenv").config();
@@ -24,7 +25,7 @@ app.get("/api/database-status", async (req, res) => {
     await testDatabase();
     res.json({
       success: true,
-      message: "MySQL connected successfully!"
+      message: "Neon PostgreSQL connected successfully!"
     });
   } catch (error) {
     console.error("Database connection failed:", error.message);
@@ -42,3 +43,4 @@ app.get("/", (req, res) => {
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server started on port " + PORT);
 });
+        

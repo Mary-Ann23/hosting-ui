@@ -592,6 +592,7 @@ async function logout() {
 
   closeModal();
   showToast("You have been logged out.");
+   window.location.replace("/");
 }
 
 /* =========================

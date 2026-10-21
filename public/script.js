@@ -1,5 +1,10 @@
 "use strict";
 
+/* =====================================
+JABIÑAR FOOD STORE
+Complete Frontend Script
+===================================== */
+
 const $ = (selector) => document.querySelector(selector);
 
 const productGrid = $("#productGrid");
@@ -15,13 +20,13 @@ let products = [];
 let currentCategory = "All";
 let currentSearch = "";
 let currentUser = null;
-let toastTimer;
+let toastTimer = null;
 let cart = loadCart();
 let orders = [];
 
-/* =========================
+/* =====================================
 GENERAL HELPERS
-========================= */
+===================================== */
 
 function money(amount) {
 return "₱" + Number(amount || 0).toLocaleString("en-PH", {
@@ -31,13 +36,18 @@ maximumFractionDigits: 2
 }
 
 function escapeHTML(value) {
-return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+return String(value ?? "").replace(/[&<>"']/g, (char) => {
+const replacements = {
 "&": "&",
 "<": "<",
 ">": ">",
 '"': """,
 "'": "'"
-})[char]);
+};
+
+return replacements[char];
+
+});
 }
 
 async function apiRequest(url, options = {}) {
@@ -45,7 +55,9 @@ const response = await fetch(url, {
 credentials: "same-origin",
 ...options,
 headers: {
-...(options.body ? { "Content-Type": "application/json" } : {}),
+...(options.body ? {
+"Content-Type": "application/json"
+} : {}),
 ...(options.headers || {})
 }
 });
@@ -78,9 +90,14 @@ toastElement.classList.remove("show");
 }
 
 function openModal(title, html) {
-if (!modalBackdrop || !modalContent) return;
+if (!modalBackdrop || !modalContent) {
+showToast("The popup is unavailable.");
+return;
+}
 
-if (modalTitle) modalTitle.textContent = title;
+if (modalTitle) {
+modalTitle.textContent = title;
+}
 
 modalContent.innerHTML = html;
 modalBackdrop.classList.remove("hidden");
@@ -90,9 +107,25 @@ function closeModal() {
 modalBackdrop?.classList.add("hidden");
 }
 
-/* =========================
+function setAccountButton() {
+const accountButton = $("#accountButton");
+
+if (accountButton) {
+accountButton.textContent = currentUser
+? "♙ Log out"
+: "♙ Log in";
+
+accountButton.setAttribute(
+  "aria-label",
+  currentUser ? "Log out" : "Log in"
+);
+
+}
+}
+
+/* =====================================
 CART STORAGE
-========================= */
+===================================== */
 
 function loadCart() {
 try {
@@ -137,13 +170,13 @@ function getCartDetails() {
 return cart.map((item) => {
 const product = getProduct(item.productId);
 
-return product
-  ? {
-      ...item,
-      product,
-      subtotal: Number(product.price) * item.quantity
-    }
-  : null;
+if (!product) return null;
+
+return {
+  ...item,
+  product,
+  subtotal: Number(product.price) * item.quantity
+};
 
 }).filter(Boolean);
 }
@@ -163,12 +196,14 @@ const count = cart.reduce(
 
 const cartCount = $("#cartCount");
 
-if (cartCount) cartCount.textContent = count;
+if (cartCount) {
+cartCount.textContent = count;
+}
 }
 
-/* =========================
+/* =====================================
 PRODUCTS
-========================= */
+===================================== */
 
 function renderProducts() {
 if (!productGrid) return;
@@ -176,7 +211,8 @@ if (!productGrid) return;
 const filtered = products.filter((product) => {
 const matchesCategory =
 currentCategory === "All" ||
-product.category === currentCategory;
+String(product.category || "").toLowerCase() ===
+currentCategory.toLowerCase();
 
 const searchText = [
   product.name,
@@ -191,11 +227,11 @@ return matchesCategory &&
 
 if (productCount) {
 productCount.textContent =
-"${filtered.length} ${filtered.length === 1 ? "product" : "products"}";
+"${filtered.length} ${ filtered.length === 1 ? "product" : "products" }";
 }
 
 if (!filtered.length) {
-productGrid.innerHTML = " <div class="empty-state"> <h3>No products found</h3> <p>Try another search or category.</p> <button type="button" class="secondary-button" data-action="clear-search"> Show all products </button> </div>";
+productGrid.innerHTML = "<div class="empty-state"> <h3>No products found</h3> <p>Try another search or category.</p> <button type="button" class="secondary-button" data-action="clear-search"> Show all products </button> </div>";
 return;
 }
 
@@ -206,15 +242,25 @@ const available = Number(product.stock ?? 0) > 0;
 return `
   <article class="product-card">
     <div class="product-image">
-      ${image ? `
-        <img
-          src="${escapeHTML(image)}"
-          alt="${escapeHTML(product.name)}"
-          loading="lazy"
-          onerror="this.style.display='none'"
-        >` : ""}
+      ${
+        image
+          ? `
+            <img
+              src="${escapeHTML(image)}"
+              alt="${escapeHTML(product.name)}"
+              loading="lazy"
+              onerror="this.style.display='none'"
+            >
+          `
+          : `
+            <div class="image-placeholder">
+              ${escapeHTML(product.name)}
+            </div>
+          `
+      }
+
       <span class="product-category">
-        ${escapeHTML(product.category || "Groceries")}
+        ${escapeHTML(product.category || "Food")}
       </span>
     </div>
 
@@ -222,33 +268,40 @@ return `
       <h3>${escapeHTML(product.name)}</h3>
 
       <p class="product-description">
-        ${escapeHTML(product.description || "A great choice for your home.")}
+        ${escapeHTML(
+          product.description || "A delicious choice for you."
+        )}
       </p>
 
       <div class="product-bottom">
-        <strong class="product-price">${money(product.price)}</strong>
+        <strong class="product-price">
+          ${money(product.price)}
+        </strong>
 
         <button
           type="button"
           class="add-to-cart"
           data-action="add"
           data-id="${escapeHTML(product.id)}"
-          ${available ? "" : "disabled"}
-        >${available ? "＋ Add" : "Out of stock"}</button>
+          ${available ? "" : "disabled"}>
+          ${available ? "＋ Add" : "Out of stock"}
+        </button>
       </div>
     </div>
-  </article>`;
+  </article>
+`;
 
 }).join("");
 }
 
 function setCategory(category) {
-currentCategory = category;
+currentCategory = category || "All";
 
 document.querySelectorAll("[data-category]").forEach((button) => {
 button.classList.toggle(
 "active",
-button.dataset.category === category
+button.dataset.category.toLowerCase() ===
+currentCategory.toLowerCase()
 );
 });
 
@@ -258,49 +311,55 @@ renderProducts();
 async function loadProducts() {
 if (productGrid) {
 productGrid.innerHTML =
-'<p class="loading">Loading products...</p>';
+'<p class="loading">Loading delicious finds...</p>';
 }
 
 try {
 const data = await apiRequest("/api/products");
-const list = Array.isArray(data) ? data : data.products;
+
+const list = Array.isArray(data)
+  ? data
+  : data.products;
 
 if (!Array.isArray(list)) {
   throw new Error("Invalid products response.");
 }
 
 products = list;
+
 renderProducts();
 updateCartCount();
 
 } catch (error) {
-products = [];
+console.error("Products loading error:", error);
 
 if (productGrid) {
   productGrid.innerHTML = `
     <div class="empty-state">
       <h3>Products are temporarily unavailable</h3>
-      <p>Check your Render server and Neon database connection.</p>
-      <button class="primary-button" type="button"
+      <p>${escapeHTML(error.message)}</p>
+      <button
+        class="primary-button"
+        type="button"
         data-action="retry-products">
         Try Again
       </button>
-    </div>`;
+    </div>
+  `;
 }
 
 if (productCount) {
   productCount.textContent = "Unavailable";
 }
 
-console.error("Products loading error:", error.message);
 updateCartCount();
 
 }
 }
 
-/* =========================
+/* =====================================
 SHOPPING CART
-========================= */
+===================================== */
 
 function addToCart(id) {
 const product = getProduct(id);
@@ -321,7 +380,9 @@ const existing = cart.find(
 (item) => String(item.productId) === String(id)
 );
 
-const nextQuantity = existing ? existing.quantity + 1 : 1;
+const nextQuantity = existing
+? existing.quantity + 1
+: 1;
 
 if (nextQuantity > stock) {
 showToast("Sorry, there is not enough stock available.");
@@ -339,6 +400,7 @@ quantity: 1
 
 saveCart();
 updateCartCount();
+
 showToast("${product.name} added to cart.");
 }
 
@@ -382,19 +444,25 @@ const content = items.length
 </div>
 
         <div class="quantity-controls">
-          <button type="button"
+          <button
+            type="button"
             data-action="quantity"
             data-id="${escapeHTML(item.productId)}"
             data-change="-1"
-            aria-label="Decrease quantity">−</button>
+            aria-label="Decrease quantity">
+            −
+          </button>
 
           <span>${item.quantity}</span>
 
-          <button type="button"
+          <button
+            type="button"
             data-action="quantity"
             data-id="${escapeHTML(item.productId)}"
             data-change="1"
-            aria-label="Increase quantity">+</button>
+            aria-label="Increase quantity">
+            +
+          </button>
         </div>
       </div>
     `).join("")}
@@ -405,64 +473,70 @@ const content = items.length
     <strong>${money(getCartTotal())}</strong>
   </div>
 
-  <button class="primary-button" type="button"
+  <button
+    class="primary-button"
+    type="button"
     data-action="checkout">
     Proceed to Checkout
   </button>
 
-  <button class="secondary-button" type="button"
+  <button
+    class="secondary-button"
+    type="button"
     data-action="clear-cart">
     Clear Cart
-  </button>`
+  </button>
+`
 : `
   <div class="empty-state">
     <h3>Your cart is empty</h3>
-    <p>Add your favorite groceries to get started.</p>
-    <button class="primary-button" type="button"
+    <p>Add your favorite food to get started.</p>
+
+    <button
+      class="primary-button"
+      type="button"
       data-action="close-modal">
       Continue Shopping
     </button>
-  </div>`;
+  </div>
+`;
 
 openModal("Your Shopping Cart", content);
 }
 
-/* =========================
+function clearCart() {
+cart = [];
+saveCart();
+updateCartCount();
+renderCart();
+showToast("Your cart has been cleared.");
+}
+
+/* =====================================
 LOGIN AND REGISTRATION
-========================= */
+===================================== */
 
 function showAccount() {
 if (currentUser) {
-openModal("My Account", `
-<div class="account-panel">
-<h3>Hello, ${escapeHTML(
-currentUser.full_name || currentUser.username
-)}!</h3>
-
-    <p>Username: <strong>
-      ${escapeHTML(currentUser.username)}
-    </strong></p>
-
-    <button class="primary-button" type="button"
-      data-action="my-orders">My Orders</button>
-
-    <button class="secondary-button" type="button"
-      data-action="logout">Log out</button>
-  </div>
-`);
+logout();
 return;
-
 }
 
 openModal("Log in", `
 <div class="auth-tabs">
-<button type="button" class="auth-tab active"
-data-action="auth-tab" data-tab="login">
+<button
+type="button"
+class="auth-tab active"
+data-action="auth-tab"
+data-tab="login">
 Log in
 </button>
 
-  <button type="button" class="auth-tab"
-    data-action="auth-tab" data-tab="register">
+  <button
+    type="button"
+    class="auth-tab"
+    data-action="auth-tab"
+    data-tab="register">
     Create account
   </button>
 </div>
@@ -476,33 +550,52 @@ renderAuthForm("login");
 
 function renderAuthForm(mode) {
 const container = $("#authFormContainer");
+
 if (!container) return;
 
 const registering = mode === "register";
 
-container.innerHTML = "<form id="authForm" class="store-form"> ${registering ?"
+container.innerHTML = "<form id="authForm" class="store-form"> ${ registering ?"
 <label class="form-field">
 <span>Full name</span>
-<input name="full_name" type="text"
-maxlength="100" required autocomplete="name"
+<input
+name="full_name"
+type="text"
+maxlength="100"
+required
+autocomplete="name"
 placeholder="Enter your full name">
 </label>
-` : ""}
+`
+: ""
+}
 
   <label class="form-field">
     <span>Username</span>
-    <input name="username" type="text"
-      minlength="3" maxlength="30" required
+    <input
+      name="username"
+      type="text"
+      minlength="3"
+      maxlength="30"
+      required
       autocomplete="username"
       placeholder="Enter your username">
   </label>
 
   <label class="form-field">
     <span>Password</span>
-    <input name="password" type="password"
-      minlength="8" maxlength="72" required
-      autocomplete="${registering ? "new-password" : "current-password"}"
-      placeholder="${registering ? "At least 8 characters" : "Enter your password"}">
+    <input
+      name="password"
+      type="password"
+      minlength="8"
+      maxlength="72"
+      required
+      autocomplete="${
+        registering ? "new-password" : "current-password"
+      }"
+      placeholder="${
+        registering ? "At least 8 characters" : "Enter your password"
+      }">
   </label>
 
   <button class="primary-button" type="submit">
@@ -515,13 +608,16 @@ placeholder="Enter your full name">
 `;
 
 document.querySelectorAll("[data-action='auth-tab']").forEach((button) => {
-button.classList.toggle("active", button.dataset.tab === mode);
+button.classList.toggle(
+"active",
+button.dataset.tab === mode
+);
 });
 }
 
 async function submitAuth(form) {
 const message = $("#authMessage");
-const button = form.querySelector("[type='submit']");
+const button = form.querySelector('[type="submit"]');
 const formData = new FormData(form);
 const isRegister = formData.has("full_name");
 
@@ -531,15 +627,21 @@ password: String(formData.get("password") || "")
 };
 
 if (isRegister) {
-payload.full_name = String(formData.get("full_name") || "").trim();
+payload.full_name =
+String(formData.get("full_name") || "").trim();
 }
 
-if (message) message.textContent = "Connecting to the server...";
 if (button) button.disabled = true;
+
+if (message) {
+message.textContent = "Connecting to the server...";
+}
 
 try {
 const data = await apiRequest(
-isRegister ? "/api/auth/register" : "/api/auth/login",
+isRegister
+? "/api/auth/register"
+: "/api/auth/login",
 {
 method: "POST",
 body: JSON.stringify(payload)
@@ -551,8 +653,10 @@ if (isRegister) {
   renderAuthForm("login");
 
   const loginMessage = $("#authMessage");
+
   if (loginMessage) {
-    loginMessage.textContent = "Account created. You can now log in.";
+    loginMessage.textContent =
+      "Account created. You can now log in.";
   }
 
   return;
@@ -563,14 +667,12 @@ if (!data.user) {
 }
 
 currentUser = data.user;
-
-const accountButton = $("#accountButton");
-if (accountButton) {
-  accountButton.textContent = "♙ Log out";
-}
-
+setAccountButton();
 closeModal();
+
 showToast("Welcome to JABIÑAR FOOD STORE!");
+
+handleMayaReturn();
 
 } catch (error) {
 if (message) {
@@ -595,19 +697,30 @@ console.warn("Logout request failed:", error.message);
 currentUser = null;
 orders = [];
 
-const accountButton = $("#accountButton");
-if (accountButton) {
-accountButton.textContent = "♙ Log in";
-}
-
+setAccountButton();
 closeModal();
+
 showToast("You have been logged out.");
-window.location.replace("/");
+
+window.location.replace("/login.html");
 }
 
-/* =========================
+async function checkLoginStatus() {
+try {
+const data = await apiRequest("/api/auth/me");
+currentUser = data.user || null;
+} catch {
+currentUser = null;
+}
+
+setAccountButton();
+
+handleMayaReturn();
+}
+
+/* =====================================
 CHECKOUT
-========================= */
+===================================== */
 
 function showCheckout() {
 if (!getCartDetails().length) {
@@ -616,8 +729,18 @@ return;
 }
 
 if (!currentUser) {
-openModal("Log in to continue", "<p>Please log in or create an account before placing an order.</p> <button class="primary-button" type="button" data-action="account"> Log in / Create account </button>");
+openModal("Log in to continue", `
+<p>Please log in or create an account before placing an order.</p>
+
+  <button
+    class="primary-button"
+    type="button"
+    data-action="account">
+    Log in / Create account
+  </button>
+`);
 return;
+
 }
 
 openModal("Checkout", `
@@ -628,29 +751,42 @@ Order total: <strong>${money(getCartTotal())}</strong>
 <form id="checkoutForm" class="store-form">
   <label class="form-field">
     <span>Full name</span>
-    <input name="full_name" type="text"
-      maxlength="100" required autocomplete="name"
+    <input
+      name="full_name"
+      type="text"
+      maxlength="100"
+      required
+      autocomplete="name"
       value="${escapeHTML(currentUser.full_name || "")}"
       placeholder="Recipient's full name">
   </label>
 
   <label class="form-field">
     <span>Contact number</span>
-    <input name="contact_number" type="tel"
-      maxlength="20" required autocomplete="tel"
+    <input
+      name="contact_number"
+      type="tel"
+      maxlength="20"
+      required
+      autocomplete="tel"
       placeholder="09XXXXXXXXX">
   </label>
 
   <label class="form-field">
     <span>Complete delivery address</span>
-    <textarea name="address" maxlength="500"
-      required autocomplete="street-address"
+    <textarea
+      name="address"
+      maxlength="500"
+      required
+      autocomplete="street-address"
       placeholder="House number, street, barangay, city"></textarea>
   </label>
 
   <label class="form-field">
     <span>Delivery instructions (optional)</span>
-    <textarea name="instructions" maxlength="300"
+    <textarea
+      name="instructions"
+      maxlength="300"
       placeholder="Landmark or other instructions"></textarea>
   </label>
 
@@ -658,8 +794,11 @@ Order total: <strong>${money(getCartTotal())}</strong>
     <legend>Payment method</legend>
 
     <label class="payment-option">
-      <input type="radio" name="payment_method"
-        value="COD" checked>
+      <input
+        type="radio"
+        name="payment_method"
+        value="COD"
+        checked>
       <span>
         <strong>Cash on Delivery</strong>
         <small>Pay when your order arrives.</small>
@@ -667,7 +806,9 @@ Order total: <strong>${money(getCartTotal())}</strong>
     </label>
 
     <label class="payment-option">
-      <input type="radio" name="payment_method"
+      <input
+        type="radio"
+        name="payment_method"
         value="MAYA">
       <span>
         <strong>Maya Sandbox</strong>
@@ -688,8 +829,9 @@ Order total: <strong>${money(getCartTotal())}</strong>
 
 async function submitCheckout(form) {
 const message = $("#checkoutMessage");
-const button = form.querySelector("[type='submit']");
+const button = form.querySelector('[type="submit"]');
 const formData = new FormData(form);
+
 const paymentMethod = String(
 formData.get("payment_method") || "COD"
 );
@@ -714,9 +856,13 @@ return;
 const payload = {
 items,
 full_name: String(formData.get("full_name") || "").trim(),
-contact_number: String(formData.get("contact_number") || "").trim(),
+contact_number: String(
+formData.get("contact_number") || ""
+).trim(),
 address: String(formData.get("address") || "").trim(),
-instructions: String(formData.get("instructions") || "").trim()
+instructions: String(
+formData.get("instructions") || ""
+).trim()
 };
 
 if (
@@ -725,13 +871,17 @@ if (
 !payload.address
 ) {
 if (message) {
-message.textContent = "Please complete all required delivery details.";
+message.textContent =
+"Please complete all required delivery details.";
 }
 return;
 }
 
 if (button) button.disabled = true;
-if (message) message.textContent = "Processing your checkout...";
+
+if (message) {
+message.textContent = "Processing your checkout...";
+}
 
 try {
 if (paymentMethod === "MAYA") {
@@ -744,7 +894,9 @@ body: JSON.stringify(payload)
     !result.checkoutUrl ||
     typeof result.checkoutUrl !== "string"
   ) {
-    throw new Error("The server did not return a Maya checkout URL.");
+    throw new Error(
+      "The server did not return a Maya checkout URL."
+    );
   }
 
   let checkoutUrl;
@@ -755,15 +907,16 @@ body: JSON.stringify(payload)
     throw new Error("The server returned an invalid checkout URL.");
   }
 
-  // Only allow HTTPS checkout URLs on the expected Maya sandbox host.
   if (
     checkoutUrl.protocol !== "https:" ||
     checkoutUrl.hostname !== "pg-sandbox.paymaya.com"
   ) {
-    throw new Error("The returned URL is not a valid Maya Sandbox URL.");
+    throw new Error(
+      "The returned URL is not a valid Maya Sandbox URL."
+    );
   }
 
-  // Keep the cart until the server confirms the payment status.
+  // Keep the cart until the order/payment is checked.
   window.location.assign(checkoutUrl.href);
   return;
 }
@@ -777,7 +930,9 @@ const result = await apiRequest("/api/orders", {
 });
 
 if (!result.order) {
-  throw new Error("The orders API did not return the saved order.");
+  throw new Error(
+    "The orders API did not return the saved order."
+  );
 }
 
 cart = [];
@@ -785,13 +940,16 @@ saveCart();
 updateCartCount();
 closeModal();
 
-showToast(`COD order #${result.order.id} submitted successfully.`);
+showToast(
+  `COD order #${result.order.id} submitted successfully.`
+);
+
 await showOrders();
 
 } catch (error) {
 if (message) {
 message.textContent = error.message.includes("Failed to fetch")
-? "Cannot connect to the checkout server. Your payment has not been confirmed."
+? "Cannot connect to the checkout server. Please try again."
 : error.message;
 }
 } finally {
@@ -799,9 +957,9 @@ if (button) button.disabled = false;
 }
 }
 
-/* =========================
+/* =====================================
 MAYA RETURN MESSAGE
-========================= */
+===================================== */
 
 function handleMayaReturn() {
 const params = new URLSearchParams(window.location.search);
@@ -811,16 +969,19 @@ if (!mayaResult) return;
 
 if (mayaResult === "success") {
 showToast(
-"Returned from Maya. Payment is not confirmed until verified by the server."
+"Returned from Maya. Payment must be verified by the server."
 );
 } else if (mayaResult === "failure") {
-showToast("Maya checkout failed. Check My Orders for the current status.");
+showToast(
+"Maya checkout failed. Check My Orders for the current status."
+);
 } else if (mayaResult === "cancel") {
-showToast("Maya checkout was cancelled. Your order may remain pending.");
+showToast(
+"Maya checkout was cancelled. Your order may remain pending."
+);
 }
 
-// This only removes the return query from the address bar.
-// It does not change the payment status in the database.
+// Never mark an order paid from a URL query parameter.
 window.history.replaceState(
 {},
 document.title,
@@ -832,9 +993,9 @@ showOrders();
 }
 }
 
-/* =========================
+/* =====================================
 ORDER HISTORY
-========================= */
+===================================== */
 
 async function loadOrders() {
 if (!currentUser) {
@@ -843,7 +1004,10 @@ return;
 }
 
 const data = await apiRequest("/api/orders");
-orders = Array.isArray(data) ? data : (data.orders || []);
+
+orders = Array.isArray(data)
+? data
+: (Array.isArray(data.orders) ? data.orders : []);
 }
 
 async function showOrders() {
@@ -853,233 +1017,4 @@ const section = $("#ordersSection");
 const list = $("#ordersList");
 
 if (!section || !list) {
-showToast("The orders section is unavailable.");
-return;
-}
-
-section.classList.remove("hidden");
-section.scrollIntoView({ behavior: "smooth" });
-
-if (!currentUser) {
-list.innerHTML = " <p>Please log in to view your orders.</p> <button class="primary-button" type="button" data-action="account">Log in</button>";
-return;
-}
-
-list.innerHTML = '<p class="loading">Loading your orders...</p>';
-
-try {
-await loadOrders();
-
-if (!orders.length) {
-  list.innerHTML = `
-    <div class="empty-state">
-      <h3>No saved orders yet</h3>
-      <p>Your orders will appear here after checkout.</p>
-    </div>`;
-  return;
-}
-
-list.innerHTML = orders.map((order) => {
-  const items = Array.isArray(order.items) ? order.items : [];
-
-  const itemsHTML = items.length
-    ? `<ul>${items.map((item) => `
-        <li>
-          ${escapeHTML(item.product_name || item.name || "Product")}
-          × ${escapeHTML(item.quantity)}
-        </li>
-      `).join("")}</ul>`
-    : "";
-
-  return `
-    <article class="cart-item">
-      <div class="cart-item-info">
-        <strong>Order #${escapeHTML(order.id)}</strong>
-
-        <p>Order status:
-          ${escapeHTML(order.order_status || order.status || "PENDING")}
-        </p>
-
-        <p>Payment method:
-          ${escapeHTML(order.payment_method || "COD")}
-        </p>
-
-        <p>Payment status:
-          ${escapeHTML(order.payment_status || "PENDING")}
-        </p>
-
-        ${order.created_at
-          ? `<p>Date: ${escapeHTML(
-              new Date(order.created_at).toLocaleString("en-PH")
-            )}</p>`
-          : ""}
-
-        ${itemsHTML}
-      </div>
-
-      <strong>${money(order.total_amount ?? order.total ?? 0)}</strong>
-    </article>`;
-}).join("");
-
-} catch (error) {
-list.innerHTML = " <div class="empty-state"> <h3>Unable to load orders</h3> <p>${escapeHTML(error.message)}</p> <button class="primary-button" type="button" data-action="my-orders">Try Again</button> </div>";
-}
-}
-
-/* =========================
-BUTTONS AND FORM EVENTS
-========================= */
-
-document.addEventListener("click", (event) => {
-const categoryButton = event.target.closest("[data-category]");
-
-if (categoryButton) {
-setCategory(categoryButton.dataset.category);
-return;
-}
-
-const button = event.target.closest("[data-action]");
-if (!button) return;
-
-const action = button.dataset.action;
-
-switch (action) {
-case "add":
-addToCart(button.dataset.id);
-break;
-
-case "cart":
-  renderCart();
-  break;
-
-case "account":
-  if (currentUser) {
-    logout();
-  } else {
-    showAccount();
-  }
-  break;
-
-case "close-modal":
-  closeModal();
-  break;
-
-case "auth-tab":
-  renderAuthForm(button.dataset.tab);
-  break;
-
-case "quantity":
-  changeQuantity(
-    button.dataset.id,
-    Number(button.dataset.change)
-  );
-  break;
-
-case "clear-cart":
-  cart = [];
-  saveCart();
-  updateCartCount();
-  renderCart();
-  showToast("Cart cleared.");
-  break;
-
-case "checkout":
-  showCheckout();
-  break;
-
-case "my-orders":
-  showOrders();
-  break;
-
-case "hide-orders":
-  $("#ordersSection")?.classList.add("hidden");
-  break;
-
-case "logout":
-  logout();
-  break;
-
-case "clear-search":
-  currentSearch = "";
-  if (searchInput) searchInput.value = "";
-  setCategory("All");
-  break;
-
-case "retry-products":
-  loadProducts();
-  break;
-
-}
-});
-
-document.addEventListener("submit", (event) => {
-if (event.target.id === "searchForm") {
-event.preventDefault();
-currentSearch = String(searchInput?.value || "").trim();
-renderProducts();
-return;
-}
-
-if (event.target.id === "authForm") {
-event.preventDefault();
-submitAuth(event.target);
-return;
-}
-
-if (event.target.id === "checkoutForm") {
-event.preventDefault();
-submitCheckout(event.target);
-}
-});
-
-document.addEventListener("input", (event) => {
-if (event.target.id === "searchInput") {
-currentSearch = event.target.value.trim();
-renderProducts();
-}
-});
-
-modalBackdrop?.addEventListener("click", (event) => {
-if (event.target === modalBackdrop) {
-closeModal();
-}
-});
-
-document.addEventListener("keydown", (event) => {
-if (event.key === "Escape") {
-closeModal();
-}
-});
-
-/* =========================
-START WEBSITE
-========================= */
-
-async function checkLoginStatus() {
-const accountButton = $("#accountButton");
-
-try {
-const data = await apiRequest("/api/auth/me");
-currentUser = data.user || null;
-
-if (accountButton) {
-  accountButton.textContent = currentUser
-    ? "♙ Log out"
-    : "♙ Log in";
-}
-
-} catch {
-currentUser = null;
-
-if (accountButton) {
-  accountButton.textContent = "♙ Log in";
-}
-
-}
-
-handleMayaReturn();
-}
-
-updateCartCount();
-checkLoginStatus();
-loadProducts();
+showToast("The orders sect

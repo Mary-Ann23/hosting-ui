@@ -1,4 +1,3 @@
-
 "use strict";
 
 const $ = (selector) => document.querySelector(selector);
@@ -21,843 +20,939 @@ let cart = loadCart();
 let orders = [];
 
 /* =========================
-   GENERAL HELPERS
+GENERAL HELPERS
 ========================= */
 
 function money(amount) {
-  return "₱" + Number(amount || 0).toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
+return "₱" + Number(amount || 0).toLocaleString("en-PH", {
+minimumFractionDigits: 2,
+maximumFractionDigits: 2
+});
 }
 
 function escapeHTML(value) {
-  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  })[char]);
+return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+"&": "&",
+"<": "<",
+">": ">",
+'"': """,
+"'": "'"
+})[char]);
 }
 
 async function apiRequest(url, options = {}) {
-  const response = await fetch(url, {
-    credentials: "same-origin",
-    ...options,
-    headers: {
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...(options.headers || {})
-    }
-  });
+const response = await fetch(url, {
+credentials: "same-origin",
+...options,
+headers: {
+...(options.body ? { "Content-Type": "application/json" } : {}),
+...(options.headers || {})
+}
+});
 
-  const data = await response.json().catch(() => ({}));
+const data = await response.json().catch(() => ({}));
 
-  if (!response.ok || data.success === false) {
-    throw new Error(data.message || `Request failed (${response.status}).`);
-  }
+if (!response.ok || data.success === false) {
+throw new Error(
+data.message || "Request failed (${response.status})."
+);
+}
 
-  return data;
+return data;
 }
 
 function showToast(message) {
-  if (!toastElement) {
-    alert(message);
-    return;
-  }
+if (!toastElement) {
+alert(message);
+return;
+}
 
-  toastElement.textContent = message;
-  toastElement.classList.add("show");
+toastElement.textContent = message;
+toastElement.classList.add("show");
 
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => {
-    toastElement.classList.remove("show");
-  }, 2800);
+clearTimeout(toastTimer);
+
+toastTimer = setTimeout(() => {
+toastElement.classList.remove("show");
+}, 2800);
 }
 
 function openModal(title, html) {
-  if (!modalBackdrop || !modalContent) return;
+if (!modalBackdrop || !modalContent) return;
 
-  if (modalTitle) modalTitle.textContent = title;
-  modalContent.innerHTML = html;
-  modalBackdrop.classList.remove("hidden");
+if (modalTitle) modalTitle.textContent = title;
+
+modalContent.innerHTML = html;
+modalBackdrop.classList.remove("hidden");
 }
 
 function closeModal() {
-  modalBackdrop?.classList.add("hidden");
+modalBackdrop?.classList.add("hidden");
 }
 
 /* =========================
-   CART STORAGE
+CART STORAGE
 ========================= */
 
 function loadCart() {
-  try {
-    const saved = JSON.parse(localStorage.getItem("jfs_cart") || "[]");
+try {
+const saved = JSON.parse(
+localStorage.getItem("jfs_cart") || "[]"
+);
 
-    if (!Array.isArray(saved)) return [];
+if (!Array.isArray(saved)) return [];
 
-    return saved
-      .filter((item) =>
-        item &&
-        item.productId != null &&
-        Number.isInteger(Number(item.quantity)) &&
-        Number(item.quantity) > 0
-      )
-      .map((item) => ({
-        productId: item.productId,
-        quantity: Number(item.quantity)
-      }));
-  } catch {
-    return [];
-  }
+return saved
+  .filter((item) =>
+    item &&
+    item.productId != null &&
+    Number.isInteger(Number(item.quantity)) &&
+    Number(item.quantity) > 0
+  )
+  .map((item) => ({
+    productId: item.productId,
+    quantity: Number(item.quantity)
+  }));
+
+} catch {
+return [];
+}
 }
 
 function saveCart() {
-  try {
-    localStorage.setItem("jfs_cart", JSON.stringify(cart));
-  } catch {
-    showToast("Cart storage is unavailable in this browser.");
-  }
+try {
+localStorage.setItem("jfs_cart", JSON.stringify(cart));
+} catch {
+showToast("Cart storage is unavailable in this browser.");
+}
 }
 
 function getProduct(id) {
-  return products.find(
-    (product) => String(product.id) === String(id)
-  );
+return products.find(
+(product) => String(product.id) === String(id)
+);
 }
 
 function getCartDetails() {
-  return cart.map((item) => {
-    const product = getProduct(item.productId);
+return cart.map((item) => {
+const product = getProduct(item.productId);
 
-    return product
-      ? {
-          ...item,
-          product,
-          subtotal: Number(product.price) * item.quantity
-        }
-      : null;
-  }).filter(Boolean);
+return product
+  ? {
+      ...item,
+      product,
+      subtotal: Number(product.price) * item.quantity
+    }
+  : null;
+
+}).filter(Boolean);
 }
 
 function getCartTotal() {
-  return getCartDetails().reduce(
-    (total, item) => total + item.subtotal,
-    0
-  );
+return getCartDetails().reduce(
+(total, item) => total + item.subtotal,
+0
+);
 }
 
 function updateCartCount() {
-  const count = cart.reduce(
-    (total, item) => total + item.quantity,
-    0
-  );
+const count = cart.reduce(
+(total, item) => total + item.quantity,
+0
+);
 
-  const cartCount = $("#cartCount");
-  if (cartCount) cartCount.textContent = count;
+const cartCount = $("#cartCount");
+
+if (cartCount) cartCount.textContent = count;
 }
 
 /* =========================
-   PRODUCTS
+PRODUCTS
 ========================= */
 
 function renderProducts() {
-  if (!productGrid) return;
+if (!productGrid) return;
 
-  const filtered = products.filter((product) => {
-    const matchesCategory =
-      currentCategory === "All" ||
-      product.category === currentCategory;
+const filtered = products.filter((product) => {
+const matchesCategory =
+currentCategory === "All" ||
+product.category === currentCategory;
 
-    const searchText = [
-      product.name,
-      product.category,
-      product.description
-    ].join(" ").toLowerCase();
+const searchText = [
+  product.name,
+  product.category,
+  product.description
+].join(" ").toLowerCase();
 
-    return matchesCategory &&
-      searchText.includes(currentSearch.toLowerCase());
-  });
+return matchesCategory &&
+  searchText.includes(currentSearch.toLowerCase());
 
-  if (productCount) {
-    productCount.textContent =
-      `${filtered.length} ${filtered.length === 1 ? "product" : "products"}`;
-  }
+});
 
-  if (!filtered.length) {
-    productGrid.innerHTML = `
-      <div class="empty-state">
-        <h3>No products found</h3>
-        <p>Try another search or category.</p>
-        <button type="button" class="secondary-button"
-          data-action="clear-search">
-          Show all products
-        </button>
-      </div>`;
-    return;
-  }
+if (productCount) {
+productCount.textContent =
+"${filtered.length} ${filtered.length === 1 ? "product" : "products"}";
+}
 
-  productGrid.innerHTML = filtered.map((product) => {
-    const image = product.image_url || "";
-    const available = Number(product.stock ?? 0) > 0;
+if (!filtered.length) {
+productGrid.innerHTML = " <div class="empty-state"> <h3>No products found</h3> <p>Try another search or category.</p> <button type="button" class="secondary-button" data-action="clear-search"> Show all products </button> </div>";
+return;
+}
 
-    return `
-      <article class="product-card">
-        <div class="product-image">
-          ${image ? `
-            <img
-              src="${escapeHTML(image)}"
-              alt="${escapeHTML(product.name)}"
-              loading="lazy"
-              onerror="this.style.display='none'"
-            >` : ""}
-          <span class="product-category">
-            ${escapeHTML(product.category || "Groceries")}
-          </span>
-        </div>
+productGrid.innerHTML = filtered.map((product) => {
+const image = product.image_url || "";
+const available = Number(product.stock ?? 0) > 0;
 
-        <div class="product-info">
-          <h3>${escapeHTML(product.name)}</h3>
-          <p class="product-description">
-            ${escapeHTML(product.description || "A great choice for your home.")}
-          </p>
+return `
+  <article class="product-card">
+    <div class="product-image">
+      ${image ? `
+        <img
+          src="${escapeHTML(image)}"
+          alt="${escapeHTML(product.name)}"
+          loading="lazy"
+          onerror="this.style.display='none'"
+        >` : ""}
+      <span class="product-category">
+        ${escapeHTML(product.category || "Groceries")}
+      </span>
+    </div>
 
-          <div class="product-bottom">
-            <strong class="product-price">${money(product.price)}</strong>
-            <button
-              type="button"
-              class="add-to-cart"
-              data-action="add"
-              data-id="${escapeHTML(product.id)}"
-              ${available ? "" : "disabled"}
-            >${available ? "＋ Add" : "Out of stock"}</button>
-          </div>
-        </div>
-      </article>`;
-  }).join("");
+    <div class="product-info">
+      <h3>${escapeHTML(product.name)}</h3>
+
+      <p class="product-description">
+        ${escapeHTML(product.description || "A great choice for your home.")}
+      </p>
+
+      <div class="product-bottom">
+        <strong class="product-price">${money(product.price)}</strong>
+
+        <button
+          type="button"
+          class="add-to-cart"
+          data-action="add"
+          data-id="${escapeHTML(product.id)}"
+          ${available ? "" : "disabled"}
+        >${available ? "＋ Add" : "Out of stock"}</button>
+      </div>
+    </div>
+  </article>`;
+
+}).join("");
 }
 
 function setCategory(category) {
-  currentCategory = category;
+currentCategory = category;
 
-  document.querySelectorAll("[data-category]").forEach((button) => {
-    button.classList.toggle(
-      "active",
-      button.dataset.category === category
-    );
-  });
+document.querySelectorAll("[data-category]").forEach((button) => {
+button.classList.toggle(
+"active",
+button.dataset.category === category
+);
+});
 
-  renderProducts();
+renderProducts();
 }
 
 async function loadProducts() {
-  if (productGrid) {
-    productGrid.innerHTML =
-      '<p class="loading">Loading products...</p>';
-  }
+if (productGrid) {
+productGrid.innerHTML =
+'<p class="loading">Loading products...</p>';
+}
 
-  try {
-    const data = await apiRequest("/api/products");
-    const list = Array.isArray(data)
-      ? data
-      : data.products;
+try {
+const data = await apiRequest("/api/products");
+const list = Array.isArray(data) ? data : data.products;
 
-    if (!Array.isArray(list)) {
-      throw new Error("Invalid products response.");
-    }
+if (!Array.isArray(list)) {
+  throw new Error("Invalid products response.");
+}
 
-    products = list;
-  } catch (error) {
-    products = [];
+products = list;
+renderProducts();
+updateCartCount();
 
-    if (productGrid) {
-      productGrid.innerHTML = `
-        <div class="empty-state">
-          <h3>Products are temporarily unavailable</h3>
-          <p>Check your Render server and Neon database connection.</p>
-          <button class="primary-button" type="button"
-            data-action="retry-products">
-            Try Again
-          </button>
-        </div>`;
-    }
+} catch (error) {
+products = [];
 
-    if (productCount) productCount.textContent = "Unavailable";
+if (productGrid) {
+  productGrid.innerHTML = `
+    <div class="empty-state">
+      <h3>Products are temporarily unavailable</h3>
+      <p>Check your Render server and Neon database connection.</p>
+      <button class="primary-button" type="button"
+        data-action="retry-products">
+        Try Again
+      </button>
+    </div>`;
+}
 
-    console.error("Products loading error:", error.message);
-    updateCartCount();
-    return;
-  }
+if (productCount) {
+  productCount.textContent = "Unavailable";
+}
 
-  renderProducts();
-  updateCartCount();
+console.error("Products loading error:", error.message);
+updateCartCount();
+
+}
 }
 
 /* =========================
-   SHOPPING CART
+SHOPPING CART
 ========================= */
 
 function addToCart(id) {
-  const product = getProduct(id);
+const product = getProduct(id);
 
-  if (!product) {
-    showToast("Product not found.");
-    return;
-  }
+if (!product) {
+showToast("Product not found.");
+return;
+}
 
-  const stock = Number(product.stock ?? 0);
+const stock = Number(product.stock ?? 0);
 
-  if (stock <= 0) {
-    showToast("This product is out of stock.");
-    return;
-  }
+if (stock <= 0) {
+showToast("This product is out of stock.");
+return;
+}
 
-  const existing = cart.find(
-    (item) => String(item.productId) === String(id)
-  );
+const existing = cart.find(
+(item) => String(item.productId) === String(id)
+);
 
-  const nextQuantity = existing ? existing.quantity + 1 : 1;
+const nextQuantity = existing ? existing.quantity + 1 : 1;
 
-  if (nextQuantity > stock) {
-    showToast("Sorry, there is not enough stock available.");
-    return;
-  }
+if (nextQuantity > stock) {
+showToast("Sorry, there is not enough stock available.");
+return;
+}
 
-  if (existing) {
-    existing.quantity = nextQuantity;
-  } else {
-    cart.push({
-      productId: product.id,
-      quantity: 1
-    });
-  }
+if (existing) {
+existing.quantity = nextQuantity;
+} else {
+cart.push({
+productId: product.id,
+quantity: 1
+});
+}
 
-  saveCart();
-  updateCartCount();
-  showToast(`${product.name} added to cart.`);
+saveCart();
+updateCartCount();
+showToast("${product.name} added to cart.");
 }
 
 function changeQuantity(id, amount) {
-  const item = cart.find(
-    (entry) => String(entry.productId) === String(id)
-  );
+const item = cart.find(
+(entry) => String(entry.productId) === String(id)
+);
 
-  const product = getProduct(id);
+const product = getProduct(id);
 
-  if (!item || !product) return;
+if (!item || !product) return;
 
-  const next = item.quantity + amount;
+const next = item.quantity + amount;
 
-  if (next <= 0) {
-    cart = cart.filter(
-      (entry) => String(entry.productId) !== String(id)
-    );
-  } else if (next > Number(product.stock ?? 0)) {
-    showToast("You have reached the available stock.");
-    return;
-  } else {
-    item.quantity = next;
-  }
+if (next <= 0) {
+cart = cart.filter(
+(entry) => String(entry.productId) !== String(id)
+);
+} else if (next > Number(product.stock ?? 0)) {
+showToast("You have reached the available stock.");
+return;
+} else {
+item.quantity = next;
+}
 
-  saveCart();
-  updateCartCount();
-  renderCart();
+saveCart();
+updateCartCount();
+renderCart();
 }
 
 function renderCart() {
-  const items = getCartDetails();
+const items = getCartDetails();
 
-  const content = items.length
-    ? `
-      <div class="cart-items">
-        ${items.map((item) => `
-          <div class="cart-item">
-            <div class="cart-item-info">
-              <strong>${escapeHTML(item.product.name)}</strong>
-              <p>${money(item.product.price)} each</p>
-              <b>${money(item.subtotal)}</b>
-            </div>
+const content = items.length
+? "<div class="cart-items"> ${items.map((item) =>"
+<div class="cart-item">
+<div class="cart-item-info">
+<strong>${escapeHTML(item.product.name)}</strong>
+<p>${money(item.product.price)} each</p>
+<b>${money(item.subtotal)}</b>
+</div>
 
-            <div class="quantity-controls">
-              <button type="button"
-                data-action="quantity"
-                data-id="${escapeHTML(item.productId)}"
-                data-change="-1"
-                aria-label="Decrease quantity">−</button>
+        <div class="quantity-controls">
+          <button type="button"
+            data-action="quantity"
+            data-id="${escapeHTML(item.productId)}"
+            data-change="-1"
+            aria-label="Decrease quantity">−</button>
 
-              <span>${item.quantity}</span>
+          <span>${item.quantity}</span>
 
-              <button type="button"
-                data-action="quantity"
-                data-id="${escapeHTML(item.productId)}"
-                data-change="1"
-                aria-label="Increase quantity">+</button>
-            </div>
-          </div>
-        `).join("")}
+          <button type="button"
+            data-action="quantity"
+            data-id="${escapeHTML(item.productId)}"
+            data-change="1"
+            aria-label="Increase quantity">+</button>
+        </div>
       </div>
+    `).join("")}
+  </div>
 
-      <div class="cart-total">
-        <span>Total</span>
-        <strong>${money(getCartTotal())}</strong>
-      </div>
+  <div class="cart-total">
+    <span>Total</span>
+    <strong>${money(getCartTotal())}</strong>
+  </div>
 
-      <button class="primary-button" type="button"
-        data-action="checkout">
-        Proceed to Checkout
-      </button>
+  <button class="primary-button" type="button"
+    data-action="checkout">
+    Proceed to Checkout
+  </button>
 
-      <button class="secondary-button" type="button"
-        data-action="clear-cart">
-        Clear Cart
-      </button>`
-    : `
-      <div class="empty-state">
-        <h3>Your cart is empty</h3>
-        <p>Add your favorite groceries to get started.</p>
-        <button class="primary-button" type="button"
-          data-action="close-modal">
-          Continue Shopping
-        </button>
-      </div>`;
+  <button class="secondary-button" type="button"
+    data-action="clear-cart">
+    Clear Cart
+  </button>`
+: `
+  <div class="empty-state">
+    <h3>Your cart is empty</h3>
+    <p>Add your favorite groceries to get started.</p>
+    <button class="primary-button" type="button"
+      data-action="close-modal">
+      Continue Shopping
+    </button>
+  </div>`;
 
-  openModal("Your Shopping Cart", content);
+openModal("Your Shopping Cart", content);
 }
 
 /* =========================
-   LOGIN AND REGISTRATION
+LOGIN AND REGISTRATION
 ========================= */
 
 function showAccount() {
-  if (currentUser) {
-    openModal("My Account", `
-      <div class="account-panel">
-        <h3>Hello, ${escapeHTML(
-          currentUser.full_name || currentUser.username
-        )}!</h3>
+if (currentUser) {
+openModal("My Account", `
+<div class="account-panel">
+<h3>Hello, ${escapeHTML(
+currentUser.full_name || currentUser.username
+)}!</h3>
 
-        <p>Username: <strong>
-          ${escapeHTML(currentUser.username)}
-        </strong></p>
+    <p>Username: <strong>
+      ${escapeHTML(currentUser.username)}
+    </strong></p>
 
-        <button class="primary-button" type="button"
-          data-action="my-orders">My Orders</button>
+    <button class="primary-button" type="button"
+      data-action="my-orders">My Orders</button>
 
-        <button class="secondary-button" type="button"
-          data-action="logout">Log out</button>
-      </div>
-    `);
-    return;
-  }
+    <button class="secondary-button" type="button"
+      data-action="logout">Log out</button>
+  </div>
+`);
+return;
 
-  openModal("Log in", `
-    <div class="auth-tabs">
-      <button type="button" class="auth-tab active"
-        data-action="auth-tab" data-tab="login">
-        Log in
-      </button>
+}
 
-      <button type="button" class="auth-tab"
-        data-action="auth-tab" data-tab="register">
-        Create account
-      </button>
-    </div>
+openModal("Log in", `
+<div class="auth-tabs">
+<button type="button" class="auth-tab active"
+data-action="auth-tab" data-tab="login">
+Log in
+</button>
 
-    <div id="authFormContainer"></div>
-  `);
+  <button type="button" class="auth-tab"
+    data-action="auth-tab" data-tab="register">
+    Create account
+  </button>
+</div>
 
-  renderAuthForm("login");
+<div id="authFormContainer"></div>
+
+`);
+
+renderAuthForm("login");
 }
 
 function renderAuthForm(mode) {
-  const container = $("#authFormContainer");
-  if (!container) return;
+const container = $("#authFormContainer");
+if (!container) return;
 
-  const registering = mode === "register";
+const registering = mode === "register";
 
-  container.innerHTML = `
-    <form id="authForm" class="store-form">
-      ${registering ? `
-        <label class="form-field">
-          <span>Full name</span>
-          <input name="full_name" type="text"
-            maxlength="100" required autocomplete="name"
-            placeholder="Enter your full name">
-        </label>
-      ` : ""}
+container.innerHTML = "<form id="authForm" class="store-form"> ${registering ?"
+<label class="form-field">
+<span>Full name</span>
+<input name="full_name" type="text"
+maxlength="100" required autocomplete="name"
+placeholder="Enter your full name">
+</label>
+` : ""}
 
-      <label class="form-field">
-        <span>Username</span>
-        <input name="username" type="text"
-          minlength="3" maxlength="50" required
-          autocomplete="username"
-          placeholder="Enter your username">
-      </label>
+  <label class="form-field">
+    <span>Username</span>
+    <input name="username" type="text"
+      minlength="3" maxlength="30" required
+      autocomplete="username"
+      placeholder="Enter your username">
+  </label>
 
-      <label class="form-field">
-        <span>Password</span>
-        <input name="password" type="password"
-          minlength="8" required
-          autocomplete="${registering ? "new-password" : "current-password"}"
-          placeholder="${registering ? "At least 8 characters" : "Enter your password"}">
-      </label>
+  <label class="form-field">
+    <span>Password</span>
+    <input name="password" type="password"
+      minlength="8" maxlength="72" required
+      autocomplete="${registering ? "new-password" : "current-password"}"
+      placeholder="${registering ? "At least 8 characters" : "Enter your password"}">
+  </label>
 
-      <button class="primary-button" type="submit">
-        ${registering ? "Create Account" : "Log in"}
-      </button>
+  <button class="primary-button" type="submit">
+    ${registering ? "Create Account" : "Log in"}
+  </button>
 
-      <p class="form-message" id="authMessage" role="status"></p>
-    </form>
-  `;
+  <p class="form-message" id="authMessage" role="status"></p>
+</form>
 
-  document.querySelectorAll("[data-action='auth-tab']").forEach((button) => {
-    button.classList.toggle("active", button.dataset.tab === mode);
-  });
+`;
+
+document.querySelectorAll("[data-action='auth-tab']").forEach((button) => {
+button.classList.toggle("active", button.dataset.tab === mode);
+});
 }
 
 async function submitAuth(form) {
-  const message = $("#authMessage");
-  const button = form.querySelector("[type='submit']");
-  const formData = new FormData(form);
-  const isRegister = formData.has("full_name");
+const message = $("#authMessage");
+const button = form.querySelector("[type='submit']");
+const formData = new FormData(form);
+const isRegister = formData.has("full_name");
 
-  const payload = {
-    username: String(formData.get("username") || "").trim(),
-    password: String(formData.get("password") || "")
-  };
+const payload = {
+username: String(formData.get("username") || "").trim(),
+password: String(formData.get("password") || "")
+};
 
-  if (isRegister) {
-    payload.full_name = String(formData.get("full_name") || "").trim();
+if (isRegister) {
+payload.full_name = String(formData.get("full_name") || "").trim();
+}
+
+if (message) message.textContent = "Connecting to the server...";
+if (button) button.disabled = true;
+
+try {
+const data = await apiRequest(
+isRegister ? "/api/auth/register" : "/api/auth/login",
+{
+method: "POST",
+body: JSON.stringify(payload)
+}
+);
+
+if (isRegister) {
+  showToast("Account created. Please log in.");
+  renderAuthForm("login");
+
+  const loginMessage = $("#authMessage");
+  if (loginMessage) {
+    loginMessage.textContent = "Account created. You can now log in.";
   }
 
-  if (message) message.textContent = "Connecting to the server...";
-  if (button) button.disabled = true;
+  return;
+}
 
-  try {
-    const data = await apiRequest(
-      isRegister ? "/api/auth/register" : "/api/auth/login",
-      {
-        method: "POST",
-        body: JSON.stringify(payload)
-      }
-    );
+if (!data.user) {
+  throw new Error("Login API did not return a user.");
+}
 
-    if (isRegister) {
-      if (message) {
-        message.textContent = "Account created. You can now log in.";
-      }
+currentUser = data.user;
 
-      showToast("Account created. Please log in.");
-      renderAuthForm("login");
-      return;
-    }
+const accountButton = $("#accountButton");
+if (accountButton) {
+  accountButton.textContent = "♙ Log out";
+}
 
-    if (!data.user) {
-      throw new Error("Login API did not return a user.");
-    }
+closeModal();
+showToast("Welcome to JABIÑAR FOOD STORE!");
 
-    currentUser = data.user;
-
-    const accountButton = $("#accountButton");
-    if (accountButton) accountButton.textContent = "♙ Log out";
-
-    closeModal();
-    showToast("Welcome to JABIÑAR FOOD STORE!");
-  } catch (error) {
-    if (message) {
-      message.textContent = error.message.includes("Failed to fetch")
-        ? "Cannot connect to the server. Check your Render deployment."
-        : error.message;
-    }
-  } finally {
-    if (button) button.disabled = false;
-  }
+} catch (error) {
+if (message) {
+message.textContent = error.message.includes("Failed to fetch")
+? "Cannot connect to the server. Check your Render deployment."
+: error.message;
+}
+} finally {
+if (button) button.disabled = false;
+}
 }
 
 async function logout() {
-  try {
-    await apiRequest("/api/auth/logout", {
-      method: "POST"
-    });
-  } catch (error) {
-    console.warn("Logout endpoint may not be configured:", error.message);
-  }
+try {
+await apiRequest("/api/auth/logout", {
+method: "POST"
+});
+} catch (error) {
+console.warn("Logout request failed:", error.message);
+}
 
-  currentUser = null;
-  orders = [];
+currentUser = null;
+orders = [];
 
-  const accountButton = $("#accountButton");
-  if (accountButton) accountButton.textContent = "♙ Log in";
+const accountButton = $("#accountButton");
+if (accountButton) {
+accountButton.textContent = "♙ Log in";
+}
 
-  closeModal();
-  showToast("You have been logged out.");
-   window.location.replace("/");
+closeModal();
+showToast("You have been logged out.");
+window.location.replace("/");
 }
 
 /* =========================
-   CHECKOUT
+CHECKOUT
 ========================= */
 
 function showCheckout() {
-  if (!getCartDetails().length) {
-    showToast("Your cart is empty.");
-    return;
-  }
+if (!getCartDetails().length) {
+showToast("Your cart is empty.");
+return;
+}
 
-  if (!currentUser) {
-    openModal("Log in to continue", `
-      <p>Please log in or create an account before placing an order.</p>
-      <button class="primary-button" type="button"
-        data-action="account">
-        Log in / Create account
-      </button>
-    `);
-    return;
-  }
+if (!currentUser) {
+openModal("Log in to continue", "<p>Please log in or create an account before placing an order.</p> <button class="primary-button" type="button" data-action="account"> Log in / Create account </button>");
+return;
+}
 
-  openModal("Checkout", `
-    <p class="checkout-total">
-      Order total: <strong>${money(getCartTotal())}</strong>
-    </p>
+openModal("Checkout", `
+<p class="checkout-total">
+Order total: <strong>${money(getCartTotal())}</strong>
+</p>
 
-    <form id="checkoutForm" class="store-form">
-      <label class="form-field">
-        <span>Full name</span>
-        <input name="full_name" type="text"
-          maxlength="100" required autocomplete="name"
-          value="${escapeHTML(currentUser.full_name || "")}"
-          placeholder="Recipient's full name">
-      </label>
+<form id="checkoutForm" class="store-form">
+  <label class="form-field">
+    <span>Full name</span>
+    <input name="full_name" type="text"
+      maxlength="100" required autocomplete="name"
+      value="${escapeHTML(currentUser.full_name || "")}"
+      placeholder="Recipient's full name">
+  </label>
 
-      <label class="form-field">
-        <span>Contact number</span>
-        <input name="contact_number" type="tel"
-          maxlength="20" required autocomplete="tel"
-          placeholder="09XXXXXXXXX">
-      </label>
+  <label class="form-field">
+    <span>Contact number</span>
+    <input name="contact_number" type="tel"
+      maxlength="20" required autocomplete="tel"
+      placeholder="09XXXXXXXXX">
+  </label>
 
-      <label class="form-field">
-        <span>Complete delivery address</span>
-        <textarea name="address" maxlength="500"
-          required autocomplete="street-address"
-          placeholder="House number, street, barangay, city"></textarea>
-      </label>
+  <label class="form-field">
+    <span>Complete delivery address</span>
+    <textarea name="address" maxlength="500"
+      required autocomplete="street-address"
+      placeholder="House number, street, barangay, city"></textarea>
+  </label>
 
-      <label class="form-field">
-        <span>Delivery instructions (optional)</span>
-        <textarea name="instructions" maxlength="300"
-          placeholder="Landmark or other instructions"></textarea>
-      </label>
+  <label class="form-field">
+    <span>Delivery instructions (optional)</span>
+    <textarea name="instructions" maxlength="300"
+      placeholder="Landmark or other instructions"></textarea>
+  </label>
 
-      <fieldset class="payment-options">
-        <legend>Payment method</legend>
+  <fieldset class="payment-options">
+    <legend>Payment method</legend>
 
-        <label class="payment-option">
-          <input type="radio" name="payment_method"
-            value="COD" checked>
-          <span>
-            <strong>Cash on Delivery</strong>
-            <small>Pay when your order arrives.</small>
-          </span>
-        </label>
+    <label class="payment-option">
+      <input type="radio" name="payment_method"
+        value="COD" checked>
+      <span>
+        <strong>Cash on Delivery</strong>
+        <small>Pay when your order arrives.</small>
+      </span>
+    </label>
 
-        <label class="payment-option">
-          <input type="radio" name="payment_method"
-            value="MAYA">
-          <span>
-            <strong>Maya</strong>
-            <small>Requires a configured Maya Sandbox checkout.</small>
-          </span>
-        </label>
-      </fieldset>
+    <label class="payment-option">
+      <input type="radio" name="payment_method"
+        value="MAYA">
+      <span>
+        <strong>Maya Sandbox</strong>
+        <small>Test checkout only; no real payment.</small>
+      </span>
+    </label>
+  </fieldset>
 
-      <p class="form-message" id="checkoutMessage" role="status"></p>
+  <p class="form-message" id="checkoutMessage" role="status"></p>
 
-      <button class="primary-button" type="submit">
-        Place Order
-      </button>
-    </form>
-  `);
+  <button class="primary-button" type="submit">
+    Place Order
+  </button>
+</form>
+
+`);
 }
 
 async function submitCheckout(form) {
-  const message = $("#checkoutMessage");
-  const button = form.querySelector("[type='submit']");
-  const formData = new FormData(form);
-  const paymentMethod = String(
-    formData.get("payment_method") || "COD"
-  );
+const message = $("#checkoutMessage");
+const button = form.querySelector("[type='submit']");
+const formData = new FormData(form);
+const paymentMethod = String(
+formData.get("payment_method") || "COD"
+);
 
-  if (!currentUser) {
-    if (message) {
-      message.textContent = "Please log in before placing an order.";
-    }
-    return;
+if (!currentUser) {
+if (message) {
+message.textContent = "Please log in before placing an order.";
+}
+return;
+}
+
+const items = getCartDetails().map((item) => ({
+product_id: item.productId,
+quantity: item.quantity
+}));
+
+if (!items.length) {
+if (message) message.textContent = "Your cart is empty.";
+return;
+}
+
+const payload = {
+items,
+full_name: String(formData.get("full_name") || "").trim(),
+contact_number: String(formData.get("contact_number") || "").trim(),
+address: String(formData.get("address") || "").trim(),
+instructions: String(formData.get("instructions") || "").trim()
+};
+
+if (
+!payload.full_name ||
+!payload.contact_number ||
+!payload.address
+) {
+if (message) {
+message.textContent = "Please complete all required delivery details.";
+}
+return;
+}
+
+if (button) button.disabled = true;
+if (message) message.textContent = "Processing your checkout...";
+
+try {
+if (paymentMethod === "MAYA") {
+const result = await apiRequest("/api/checkout/maya", {
+method: "POST",
+body: JSON.stringify(payload)
+});
+
+  if (
+    !result.checkoutUrl ||
+    typeof result.checkoutUrl !== "string"
+  ) {
+    throw new Error("The server did not return a Maya checkout URL.");
   }
 
-  const items = getCartDetails().map((item) => ({
-    product_id: item.productId,
-    quantity: item.quantity
-  }));
-
-  if (!items.length) {
-    if (message) message.textContent = "Your cart is empty.";
-    return;
-  }
-
-  if (paymentMethod === "MAYA") {
-    if (message) {
-      message.textContent =
-        "Maya checkout is not confirmed as configured yet. No payment has been made.";
-    }
-    return;
-  }
-
-  const payload = {
-    items,
-    payment_method: "COD",
-    full_name: String(formData.get("full_name") || "").trim(),
-    contact_number: String(formData.get("contact_number") || "").trim(),
-    address: String(formData.get("address") || "").trim(),
-    instructions: String(formData.get("instructions") || "").trim()
-  };
-
-  if (button) button.disabled = true;
-  if (message) message.textContent = "Submitting your order...";
+  let checkoutUrl;
 
   try {
-    const result = await apiRequest("/api/orders", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    if (!result.order) {
-      throw new Error("The orders API did not return the saved order.");
-    }
-
-    cart = [];
-    saveCart();
-    updateCartCount();
-    closeModal();
-
-    showToast(`Order #${result.order.id} submitted successfully.`);
-    await showOrders();
-  } catch (error) {
-    if (message) {
-      message.textContent = error.message.includes("Failed to fetch")
-        ? "Orders API is not ready. Your order has not been confirmed."
-        : error.message;
-    }
-  } finally {
-    if (button) button.disabled = false;
+    checkoutUrl = new URL(result.checkoutUrl);
+  } catch {
+    throw new Error("The server returned an invalid checkout URL.");
   }
+
+  // Only allow HTTPS checkout URLs on the expected Maya sandbox host.
+  if (
+    checkoutUrl.protocol !== "https:" ||
+    checkoutUrl.hostname !== "pg-sandbox.paymaya.com"
+  ) {
+    throw new Error("The returned URL is not a valid Maya Sandbox URL.");
+  }
+
+  // Keep the cart until the server confirms the payment status.
+  window.location.assign(checkoutUrl.href);
+  return;
+}
+
+const result = await apiRequest("/api/orders", {
+  method: "POST",
+  body: JSON.stringify({
+    ...payload,
+    payment_method: "COD"
+  })
+});
+
+if (!result.order) {
+  throw new Error("The orders API did not return the saved order.");
+}
+
+cart = [];
+saveCart();
+updateCartCount();
+closeModal();
+
+showToast(`COD order #${result.order.id} submitted successfully.`);
+await showOrders();
+
+} catch (error) {
+if (message) {
+message.textContent = error.message.includes("Failed to fetch")
+? "Cannot connect to the checkout server. Your payment has not been confirmed."
+: error.message;
+}
+} finally {
+if (button) button.disabled = false;
+}
 }
 
 /* =========================
-   ORDER HISTORY
+MAYA RETURN MESSAGE
+========================= */
+
+function handleMayaReturn() {
+const params = new URLSearchParams(window.location.search);
+const mayaResult = params.get("maya");
+
+if (!mayaResult) return;
+
+if (mayaResult === "success") {
+showToast(
+"Returned from Maya. Payment is not confirmed until verified by the server."
+);
+} else if (mayaResult === "failure") {
+showToast("Maya checkout failed. Check My Orders for the current status.");
+} else if (mayaResult === "cancel") {
+showToast("Maya checkout was cancelled. Your order may remain pending.");
+}
+
+// This only removes the return query from the address bar.
+// It does not change the payment status in the database.
+window.history.replaceState(
+{},
+document.title,
+window.location.pathname
+);
+
+if (currentUser) {
+showOrders();
+}
+}
+
+/* =========================
+ORDER HISTORY
 ========================= */
 
 async function loadOrders() {
-  if (!currentUser) {
-    orders = [];
-    return;
-  }
+if (!currentUser) {
+orders = [];
+return;
+}
 
-  try {
-    const data = await apiRequest("/api/orders");
-    orders = Array.isArray(data) ? data : (data.orders || []);
-  } catch (error) {
-    orders = [];
-    throw error;
-  }
+const data = await apiRequest("/api/orders");
+orders = Array.isArray(data) ? data : (data.orders || []);
 }
 
 async function showOrders() {
-  closeModal();
+closeModal();
 
-  const section = $("#ordersSection");
-  const list = $("#ordersList");
+const section = $("#ordersSection");
+const list = $("#ordersList");
 
-  if (!section || !list) {
-    showToast("The orders section is unavailable.");
-    return;
-  }
+if (!section || !list) {
+showToast("The orders section is unavailable.");
+return;
+}
 
-  section.classList.remove("hidden");
-  section.scrollIntoView({ behavior: "smooth" });
+section.classList.remove("hidden");
+section.scrollIntoView({ behavior: "smooth" });
 
-  if (!currentUser) {
-    list.innerHTML = `
-      <p>Please log in to view your orders.</p>
-      <button class="primary-button" type="button"
-        data-action="account">Log in</button>
-    `;
-    return;
-  }
+if (!currentUser) {
+list.innerHTML = " <p>Please log in to view your orders.</p> <button class="primary-button" type="button" data-action="account">Log in</button>";
+return;
+}
 
-  list.innerHTML = '<p class="loading">Loading your orders...</p>';
+list.innerHTML = '<p class="loading">Loading your orders...</p>';
 
-  try {
-    await loadOrders();
+try {
+await loadOrders();
 
-    if (!orders.length) {
-      list.innerHTML = `
-        <div class="empty-state">
-          <h3>No saved orders yet</h3>
-          <p>Your orders will appear here after checkout is configured.</p>
-        </div>`;
-      return;
-    }
+if (!orders.length) {
+  list.innerHTML = `
+    <div class="empty-state">
+      <h3>No saved orders yet</h3>
+      <p>Your orders will appear here after checkout.</p>
+    </div>`;
+  return;
+}
 
-    list.innerHTML = orders.map((order) => `
-      <article class="cart-item">
-        <div class="cart-item-info">
-          <strong>Order #${escapeHTML(order.id)}</strong>
-          <p>Status: ${escapeHTML(order.status || order.order_status || "Pending")}</p>
-          <p>Payment: ${escapeHTML(order.payment_method || "COD")}</p>
-        </div>
-        <strong>${money(order.total_amount ?? order.total ?? 0)}</strong>
-      </article>
-    `).join("");
-  } catch (error) {
-    list.innerHTML = `
-      <div class="empty-state">
-        <h3>Unable to load orders</h3>
-        <p>${escapeHTML(error.message)}</p>
-        <button class="primary-button" type="button"
-          data-action="my-orders">Try Again</button>
-      </div>`;
-  }
+list.innerHTML = orders.map((order) => {
+  const items = Array.isArray(order.items) ? order.items : [];
+
+  const itemsHTML = items.length
+    ? `<ul>${items.map((item) => `
+        <li>
+          ${escapeHTML(item.product_name || item.name || "Product")}
+          × ${escapeHTML(item.quantity)}
+        </li>
+      `).join("")}</ul>`
+    : "";
+
+  return `
+    <article class="cart-item">
+      <div class="cart-item-info">
+        <strong>Order #${escapeHTML(order.id)}</strong>
+
+        <p>Order status:
+          ${escapeHTML(order.order_status || order.status || "PENDING")}
+        </p>
+
+        <p>Payment method:
+          ${escapeHTML(order.payment_method || "COD")}
+        </p>
+
+        <p>Payment status:
+          ${escapeHTML(order.payment_status || "PENDING")}
+        </p>
+
+        ${order.created_at
+          ? `<p>Date: ${escapeHTML(
+              new Date(order.created_at).toLocaleString("en-PH")
+            )}</p>`
+          : ""}
+
+        ${itemsHTML}
+      </div>
+
+      <strong>${money(order.total_amount ?? order.total ?? 0)}</strong>
+    </article>`;
+}).join("");
+
+} catch (error) {
+list.innerHTML = " <div class="empty-state"> <h3>Unable to load orders</h3> <p>${escapeHTML(error.message)}</p> <button class="primary-button" type="button" data-action="my-orders">Try Again</button> </div>";
+}
 }
 
 /* =========================
-   BUTTONS AND FORM EVENTS
+BUTTONS AND FORM EVENTS
 ========================= */
 
 document.addEventListener("click", (event) => {
-  const categoryButton = event.target.closest("[data-category]");
+const categoryButton = event.target.closest("[data-category]");
 
-  if (categoryButton) {
-    setCategory(categoryButton.dataset.category);
-    return;
-  }
+if (categoryButton) {
+setCategory(categoryButton.dataset.category);
+return;
+}
 
-  const button = event.target.closest("[data-action]");
-  if (!button) return;
+const button = event.target.closest("[data-action]");
+if (!button) return;
 
-  const action = button.dataset.action;
+const action = button.dataset.action;
 
-  switch (action) {
-    case "add":
-      addToCart(button.dataset.id);
-      break;
+switch (action) {
+case "add":
+addToCart(button.dataset.id);
+break;
 
-    case "cart":
-      renderCart();
-      break;
+case "cart":
+  renderCart();
+  break;
 
-    case "account":
+case "account":
   if (currentUser) {
     logout();
   } else {
@@ -865,121 +960,126 @@ document.addEventListener("click", (event) => {
   }
   break;
 
-    case "close-modal":
-      closeModal();
-      break;
+case "close-modal":
+  closeModal();
+  break;
 
-    case "auth-tab":
-      renderAuthForm(button.dataset.tab);
-      break;
+case "auth-tab":
+  renderAuthForm(button.dataset.tab);
+  break;
 
-    case "quantity":
-      changeQuantity(
-        button.dataset.id,
-        Number(button.dataset.change)
-      );
-      break;
+case "quantity":
+  changeQuantity(
+    button.dataset.id,
+    Number(button.dataset.change)
+  );
+  break;
 
-    case "clear-cart":
-      cart = [];
-      saveCart();
-      updateCartCount();
-      renderCart();
-      showToast("Cart cleared.");
-      break;
+case "clear-cart":
+  cart = [];
+  saveCart();
+  updateCartCount();
+  renderCart();
+  showToast("Cart cleared.");
+  break;
 
-    case "checkout":
-      showCheckout();
-      break;
+case "checkout":
+  showCheckout();
+  break;
 
-    case "my-orders":
-      showOrders();
-      break;
+case "my-orders":
+  showOrders();
+  break;
 
-    case "hide-orders":
-      $("#ordersSection")?.classList.add("hidden");
-      break;
+case "hide-orders":
+  $("#ordersSection")?.classList.add("hidden");
+  break;
 
-    case "logout":
-      logout();
-      break;
+case "logout":
+  logout();
+  break;
 
-    case "clear-search":
-      currentSearch = "";
-      if (searchInput) searchInput.value = "";
-      setCategory("All");
-      break;
+case "clear-search":
+  currentSearch = "";
+  if (searchInput) searchInput.value = "";
+  setCategory("All");
+  break;
 
-    case "retry-products":
-      loadProducts();
-      break;
-  }
+case "retry-products":
+  loadProducts();
+  break;
+
+}
 });
 
 document.addEventListener("submit", (event) => {
-  if (event.target.id === "searchForm") {
-    event.preventDefault();
-    currentSearch = String(searchInput?.value || "").trim();
-    renderProducts();
-    return;
-  }
+if (event.target.id === "searchForm") {
+event.preventDefault();
+currentSearch = String(searchInput?.value || "").trim();
+renderProducts();
+return;
+}
 
-  if (event.target.id === "authForm") {
-    event.preventDefault();
-    submitAuth(event.target);
-    return;
-  }
+if (event.target.id === "authForm") {
+event.preventDefault();
+submitAuth(event.target);
+return;
+}
 
-  if (event.target.id === "checkoutForm") {
-    event.preventDefault();
-    submitCheckout(event.target);
-  }
+if (event.target.id === "checkoutForm") {
+event.preventDefault();
+submitCheckout(event.target);
+}
 });
 
 document.addEventListener("input", (event) => {
-  if (event.target.id === "searchInput") {
-    currentSearch = event.target.value.trim();
-    renderProducts();
-  }
+if (event.target.id === "searchInput") {
+currentSearch = event.target.value.trim();
+renderProducts();
+}
 });
 
 modalBackdrop?.addEventListener("click", (event) => {
-  if (event.target === modalBackdrop) {
-    closeModal();
-  }
+if (event.target === modalBackdrop) {
+closeModal();
+}
 });
 
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    closeModal();
-  }
+if (event.key === "Escape") {
+closeModal();
+}
 });
 
 /* =========================
-   START WEBSITE
+START WEBSITE
 ========================= */
 
 async function checkLoginStatus() {
-  const accountButton = $("#accountButton");
+const accountButton = $("#accountButton");
 
-  try {
-    const data = await apiRequest("/api/auth/me");
-    currentUser = data.user || null;
+try {
+const data = await apiRequest("/api/auth/me");
+currentUser = data.user || null;
 
-    if (accountButton) {
-      accountButton.textContent = currentUser
-        ? "♙ Log out"
-        : "♙ Log in";
-    }
-  } catch (error) {
-    currentUser = null;
-
-    if (accountButton) {
-      accountButton.textContent = "♙ Log in";
-    }
-  }
+if (accountButton) {
+  accountButton.textContent = currentUser
+    ? "♙ Log out"
+    : "♙ Log in";
 }
-  updateCartCount();
+
+} catch {
+currentUser = null;
+
+if (accountButton) {
+  accountButton.textContent = "♙ Log in";
+}
+
+}
+
+handleMayaReturn();
+}
+
+updateCartCount();
 checkLoginStatus();
-loadProducts();        
-            
+loadProducts();

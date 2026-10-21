@@ -1,37 +1,138 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Hosting UI</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#64258b">
+  <title>JABIÑAR FOOD STORE</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h2>My Hosting UI</h2>
-    <span class="status">● Server Dashboard</span>
+  <div class="top-strip">
+    💜 Good Food, Good Mood! — Fresh Choices for Everyone
+  </div>
+
+  <header class="site-header">
+    <a class="brand" href="#">
+      <span class="brand-icon">JF</span>
+      <span>
+        <strong>JABIÑAR</strong>
+        <b>FOOD STORE</b>
+        <small>Quality Food • Fresh Choices • Better Living</small>
+      </span>
+    </a>
+
+    <form id="searchForm" class="search-box">
+      <input id="searchInput" type="search"
+        placeholder="Search fruits, groceries, snacks..."
+        aria-label="Search products">
+      <button type="submit">Search</button>
+    </form>
+
+    <div class="header-buttons">
+      <button id="accountButton" type="button">♙ Log in</button>
+      <button id="cartButton" type="button">
+        🛒 Cart <span id="cartCount">0</span>
+      </button>
+    </div>
   </header>
 
-  <main class="container">
-    <section class="welcome">
-      <p class="eyebrow">WELCOME BACK</p>
-      <h1>Your Hosting Dashboard</h1>
-      <p>Manage your website and check your server connection.</p>
+  <nav class="category-nav">
+    <button class="category-link active" data-category="All">All Products</button>
+    <button class="category-link" data-category="Fresh Produce">🥬 Fresh Produce</button>
+    <button class="category-link" data-category="Groceries">🛒 Groceries</button>
+    <button class="category-link" data-category="Beverages">🥤 Beverages</button>
+    <button class="category-link" data-category="Snacks">🍪 Snacks</button>
+    <button class="category-link" data-category="Household Needs">🏠 Household Needs</button>
+  </nav>
+
+  <main class="page">
+    <section class="hero">
+      <div class="hero-copy">
+        <span class="eyebrow">WELCOME TO JABIÑAR FOOD STORE</span>
+        <h1>Shop Fresh.<br><span>Live Better.</span></h1>
+        <p>Your everyday grocery favorites in one convenient place.</p>
+        <a href="#products" class="primary-link">Explore Products →</a>
+        <div class="hero-perks">
+          <span>✓ Fresh choices</span>
+          <span>✓ Easy ordering</span>
+          <span>✓ COD available</span>
+        </div>
+      </div>
+      <div class="hero-picture">
+        <img
+          src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1000&q=85"
+          alt="Fresh fruits and vegetables">
+        <div class="picture-label">Fresh every day 💜</div>
+      </div>
     </section>
 
-    <section class="card">
-      <h3>Server Status</h3>
-      <p id="serverStatus">Checking connection...</p>
-      <button id="checkButton">Check Server</button>
+    <section class="section-heading" id="products">
+      <div>
+        <span class="eyebrow">OUR SELECTION</span>
+        <h2>Shop Your Favorites</h2>
+        <p>Everyday essentials, picked for you.</p>
+      </div>
+      <span class="product-count" id="productCount">Loading products...</span>
     </section>
 
-    <section class="card">
-      <h3>Database Status</h3>
-      <p id="dbStatus">Database connection not configured yet.</p>
+    <div id="categoryChips" class="category-chips">
+      <button class="chip active" data-category="All">All</button>
+      <button class="chip" data-category="Fresh Produce">Fresh Produce</button>
+      <button class="chip" data-category="Groceries">Groceries</button>
+      <button class="chip" data-category="Beverages">Beverages</button>
+      <button class="chip" data-category="Snacks">Snacks</button>
+      <button class="chip" data-category="Household Needs">Household Needs</button>
+    </div>
+
+    <section id="productGrid" class="product-grid" aria-live="polite">
+      <p class="loading">Loading delicious finds...</p>
+    </section>
+
+    <section class="store-promo">
+      <div>
+        <span class="eyebrow">SHOP WITH EASE</span>
+        <h2>Your groceries, your way.</h2>
+        <p>Choose Cash on Delivery or continue to Maya Sandbox when online payment is configured.</p>
+      </div>
+      <span class="promo-icon">🛍️</span>
+    </section>
+
+    <section id="ordersSection" class="orders-section hidden">
+      <div class="section-heading">
+        <div>
+          <span class="eyebrow">YOUR PURCHASES</span>
+          <h2>My Orders</h2>
+        </div>
+        <button id="closeOrders" class="secondary-button" type="button">Close</button>
+      </div>
+      <div id="ordersList"></div>
     </section>
   </main>
 
+  <footer class="footer">
+    <div class="brand footer-brand">
+      <span class="brand-icon">JF</span>
+      <span><strong>JABIÑAR</strong><b>FOOD STORE</b></span>
+    </div>
+    <p>Good food, happy mood. 💜</p>
+    <small>© <span id="year"></span> JABIÑAR FOOD STORE</small>
+  </footer>
+
+  <div id="modalBackdrop" class="modal-backdrop hidden">
+    <section class="modal" role="dialog" aria-modal="true"
+      aria-labelledby="modalTitle">
+      <button id="closeModal" class="modal-close" type="button"
+        aria-label="Close">×</button>
+      <div id="modalContent"></div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status"></div>
+
   <script src="/script.js"></script>
 </body>
-</html>
+      </html>
+        

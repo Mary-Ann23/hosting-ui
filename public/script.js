@@ -560,7 +560,7 @@ async function submitAuth(form) {
     currentUser = data.user;
 
     const accountButton = $("#accountButton");
-    if (accountButton) accountButton.textContent = "♙ My Account";
+    if (accountButton) accountButton.textContent = "♙ Log out";
 
     closeModal();
     showToast("Welcome to JABIÑAR FOOD STORE!");
@@ -857,8 +857,12 @@ document.addEventListener("click", (event) => {
       break;
 
     case "account":
-      showAccount();
-      break;
+  if (currentUser) {
+    logout();
+  } else {
+    showAccount();
+  }
+  break;
 
     case "close-modal":
       closeModal();
@@ -957,5 +961,25 @@ document.addEventListener("keydown", (event) => {
 updateCartCount();
 loadProducts();
 
+async function checkLoginStatus() {
+  const accountButton = $("#accountButton");
+
+  try {
+    const data = await apiRequest("/api/auth/me");
+    currentUser = data.user || null;
+
+    if (accountButton) {
+      accountButton.textContent = currentUser
+        ? "♙ Log out"
+        : "♙ Log in";
+    }
+  } catch (error) {
+    currentUser = null;
+
+    if (accountButton) {
+      accountButton.textContent = "♙ Log in";
+    }
+  }
+}
           
             

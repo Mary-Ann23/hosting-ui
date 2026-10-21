@@ -37,6 +37,32 @@ app.get("/api/database-status", async (req, res) => {
   }
 });
 
+app.get("/api/products", async (req, res) => {
+  try {
+    const { getPool } = require("./db");
+    const db = getPool();
+
+    const result = await db.query(`
+      SELECT id, name, description, price,
+             image_url, stock, category
+      FROM products
+      ORDER BY id ASC
+    `);
+
+    res.json({
+      success: true,
+      products: result.rows
+    });
+  } catch (error) {
+    console.error("Products API error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to load products."
+    });
+  }
+});
+                  
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });

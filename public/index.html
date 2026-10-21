@@ -1,138 +1,906 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#64258b">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#7651c9">
+  <meta name="description" content="Shop fresh groceries and everyday essentials at JABIÑAR FOOD STORE.">
   <title>JABIÑAR FOOD STORE</title>
-  <link rel="stylesheet" href="/style.css">
+
+  <style>
+    :root {
+      --purple: #7651c9;
+      --purple-dark: #5634a5;
+      --purple-light: #f1ebff;
+      --pink: #ffecf4;
+      --ink: #282238;
+      --muted: #777184;
+      --white: #ffffff;
+      --border: #ece7f4;
+      --green: #238653;
+      --shadow: 0 8px 28px rgba(61, 38, 105, 0.09);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: #fbfaff;
+      color: var(--ink);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    button, input, textarea {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .top-message {
+      padding: 9px 15px;
+      background: var(--purple-dark);
+      color: white;
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255, 255, 255, .97);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: auto;
+      padding: 15px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ink);
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      width: 45px;
+      height: 45px;
+      display: grid;
+      place-items: center;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #9877ed, #6340b3);
+      color: white;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .brand-name {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .brand-tagline {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 9px;
+      flex-wrap: wrap;
+    }
+
+    .header-button {
+      padding: 10px 13px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+      color: var(--ink);
+      font-weight: 700;
+    }
+
+    .header-button:hover {
+      background: var(--purple-light);
+    }
+
+    .header-button.primary {
+      background: var(--purple);
+      border-color: var(--purple);
+      color: white;
+    }
+
+    .page-container {
+      width: min(1160px, 100%);
+      margin: auto;
+      padding: 25px 22px 50px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 36px;
+      border-radius: 26px;
+      background: linear-gradient(120deg, #eee6ff, #fff0f7);
+      display: grid;
+      grid-template-columns: 1.4fr .8fr;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .hero-label {
+      display: inline-block;
+      padding: 7px 12px;
+      border-radius: 20px;
+      background: white;
+      color: var(--purple-dark);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .hero h1 {
+      max-width: 600px;
+      margin: 17px 0 12px;
+      font-size: clamp(29px, 5vw, 45px);
+      line-height: 1.12;
+      letter-spacing: -1px;
+    }
+
+    .hero p {
+      max-width: 480px;
+      color: #655a77;
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .hero-emoji {
+      text-align: center;
+      font-size: clamp(75px, 12vw, 125px);
+    }
+
+    .hero-button {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 13px 20px;
+      border: 0;
+      border-radius: 12px;
+      background: var(--purple);
+      color: white;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .search-section {
+      margin: 27px 0;
+    }
+
+    .search-form {
+      display: flex;
+      gap: 10px;
+    }
+
+    .search-form input {
+      width: 100%;
+      min-width: 0;
+      padding: 15px 17px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      outline: none;
+      background: white;
+    }
+
+    .search-form input:focus,
+    .store-form input:focus,
+    .store-form textarea:focus {
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(118, 81, 201, .12);
+    }
+
+    .search-form button {
+      padding: 0 20px;
+      border: 0;
+      border-radius: 14px;
+      background: var(--purple);
+      color: white;
+      font-weight: 800;
+    }
+
+    .section-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin: 28px 0 16px;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      font-size: 23px;
+    }
+
+    .section-heading p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    #productCount {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .category-list {
+      display: flex;
+      gap: 9px;
+      overflow-x: auto;
+      padding: 2px 0 12px;
+    }
+
+    .category-button {
+      flex-shrink: 0;
+      padding: 10px 15px;
+      border: 1px solid var(--border);
+      border-radius: 25px;
+      background: white;
+      color: #5e566d;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .category-button.active,
+    .category-button:hover {
+      background: var(--purple);
+      border-color: var(--purple);
+      color: white;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .product-card {
+      overflow: hidden;
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: white;
+      box-shadow: 0 4px 16px rgba(61, 38, 105, .035);
+      transition: transform .2s, box-shadow .2s;
+    }
+
+    .product-card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow);
+    }
+
+    .product-image {
+      position: relative;
+      height: 165px;
+      overflow: hidden;
+      background: var(--purple-light);
+    }
+
+    .product-image img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .product-category {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      max-width: calc(100% - 20px);
+      overflow: hidden;
+      padding: 6px 9px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, .94);
+      color: var(--purple-dark);
+      font-size: 10px;
+      font-weight: 800;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .product-info {
+      padding: 14px;
+    }
+
+    .product-info h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      overflow-wrap: anywhere;
+    }
+
+    .product-description {
+      min-height: 35px;
+      margin: 0 0 13px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .product-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 7px;
+    }
+
+    .product-price {
+      color: var(--purple-dark);
+      font-size: 15px;
+    }
+
+    .add-to-cart {
+      padding: 9px 10px;
+      border: 0;
+      border-radius: 10px;
+      background: var(--purple-light);
+      color: var(--purple-dark);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .add-to-cart:hover {
+      background: var(--purple);
+      color: white;
+    }
+
+    .loading,
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 35px 15px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .empty-state h3 {
+      color: var(--ink);
+    }
+
+    .orders-section {
+      margin-top: 45px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: white;
+    }
+
+    .orders-section h2 {
+      margin-top: 0;
+    }
+
+    .site-footer {
+      padding: 28px 20px;
+      background: #f0eaff;
+      color: #655a77;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .site-footer strong {
+      color: var(--purple-dark);
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow-y: auto;
+      padding: 18px;
+      background: rgba(28, 20, 44, .58);
+    }
+
+    .modal {
+      width: min(100%, 490px);
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 23px;
+      border-radius: 22px;
+      background: white;
+      box-shadow: 0 20px 70px rgba(0, 0, 0, .2);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .modal-close {
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      border: 0;
+      border-radius: 50%;
+      background: var(--purple-light);
+      color: var(--purple-dark);
+      font-size: 22px;
+    }
+
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-bottom: 20px;
+      padding: 5px;
+      border-radius: 13px;
+      background: #f4f0fb;
+    }
+
+    .auth-tab {
+      padding: 11px 7px;
+      border: 0;
+      border-radius: 10px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .auth-tab.active {
+      background: white;
+      color: var(--purple-dark);
+      box-shadow: 0 2px 8px rgba(40, 20, 70, .08);
+    }
+
+    .store-form {
+      display: grid;
+      gap: 14px;
+    }
+
+    .form-field {
+      display: grid;
+      gap: 7px;
+    }
+
+    .form-field span {
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .store-form input:not([type="radio"]),
+    .store-form textarea {
+      width: 100%;
+      min-width: 0;
+      padding: 12px 13px;
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      outline: none;
+      background: white;
+    }
+
+    .store-form textarea {
+      min-height: 85px;
+      resize: vertical;
+    }
+
+    .primary-button,
+    .secondary-button {
+      width: 100%;
+      padding: 13px 15px;
+      border: 0;
+      border-radius: 12px;
+      font-weight: 800;
+    }
+
+    .primary-button {
+      background: var(--purple);
+      color: white;
+    }
+
+    .primary-button:hover {
+      background: var(--purple-dark);
+    }
+
+    .secondary-button {
+      margin-top: 9px;
+      background: var(--purple-light);
+      color: var(--purple-dark);
+    }
+
+    .form-message {
+      margin: 0;
+      color: #a33a55;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .cart-items {
+      display: grid;
+      gap: 12px;
+    }
+
+    .cart-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cart-item-info {
+      min-width: 0;
+    }
+
+    .cart-item-info strong {
+      overflow-wrap: anywhere;
+    }
+
+    .cart-item-info p {
+      margin: 6px 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .quantity-controls button {
+      width: 30px;
+      height: 30px;
+      border: 0;
+      border-radius: 9px;
+      background: var(--purple-light);
+      color: var(--purple-dark);
+      font-weight: 800;
+    }
+
+    .cart-total {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+      font-size: 17px;
+    }
+
+    .checkout-total {
+      padding: 13px;
+      border-radius: 12px;
+      background: var(--purple-light);
+    }
+
+    .payment-options {
+      display: grid;
+      gap: 12px;
+      margin: 0;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 13px;
+    }
+
+    .payment-options legend {
+      padding: 0 5px;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .payment-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .payment-option input {
+      margin-top: 3px;
+      accent-color: var(--purple);
+    }
+
+    .payment-option span {
+      display: grid;
+      gap: 4px;
+    }
+
+    .payment-option small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 200;
+      max-width: calc(100% - 40px);
+      padding: 14px 18px;
+      border-radius: 12px;
+      background: #302541;
+      color: white;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px);
+      transition: .2s;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    @media (max-width: 900px) {
+      .product-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .product-image {
+        height: 150px;
+      }
+    }
+
+    @media (max-width: 650px) {
+      .header-inner {
+        padding: 12px 14px;
+        align-items: flex-start;
+      }
+
+      .brand-name {
+        font-size: 13px;
+      }
+
+      .brand-tagline {
+        font-size: 10px;
+      }
+
+      .brand-logo {
+        width: 39px;
+        height: 39px;
+      }
+
+      .header-actions {
+        gap: 6px;
+      }
+
+      .header-button {
+        padding: 9px 10px;
+        font-size: 12px;
+      }
+
+      .page-container {
+        padding: 18px 13px 35px;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 25px 21px;
+        gap: 0;
+      }
+
+      .hero h1 {
+        font-size: 32px;
+      }
+
+      .hero-emoji {
+        display: none;
+      }
+
+      .product-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .product-image {
+        height: 135px;
+      }
+
+      .product-info {
+        padding: 11px;
+      }
+
+      .product-info h3 {
+        font-size: 14px;
+      }
+
+      .product-price {
+        font-size: 13px;
+      }
+
+      .add-to-cart {
+        padding: 8px;
+        font-size: 11px;
+      }
+
+      .section-heading h2 {
+        font-size: 20px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .brand-tagline {
+        display: none;
+      }
+
+      .header-inner {
+        gap: 8px;
+      }
+
+      .header-button {
+        padding: 8px;
+      }
+
+      .product-grid {
+        gap: 8px;
+      }
+    }
+  </style>
 </head>
+
 <body>
-  <div class="top-strip">
+  <div class="top-message">
     💜 Good Food, Good Mood! — Fresh Choices for Everyone
   </div>
 
   <header class="site-header">
-    <a class="brand" href="#">
-      <span class="brand-icon">JF</span>
-      <span>
-        <strong>JABIÑAR</strong>
-        <b>FOOD STORE</b>
-        <small>Quality Food • Fresh Choices • Better Living</small>
-      </span>
-    </a>
+    <div class="header-inner">
+      <a class="brand" href="#home" aria-label="JABIÑAR FOOD STORE home">
+        <div class="brand-logo">JF</div>
+        <div>
+          <div class="brand-name">JABIÑAR FOOD STORE</div>
+          <div class="brand-tagline">Good food, happy mood.</div>
+        </div>
+      </a>
 
-    <form id="searchForm" class="search-box">
-      <input id="searchInput" type="search"
-        placeholder="Search fruits, groceries, snacks..."
-        aria-label="Search products">
-      <button type="submit">Search</button>
-    </form>
-
-    <div class="header-buttons">
-      <button id="accountButton" type="button">♙ Log in</button>
-      <button id="cartButton" type="button">
-        🛒 Cart <span id="cartCount">0</span>
-      </button>
+      <nav class="header-actions" aria-label="Main navigation">
+        <a class="header-button" href="#menu" style="text-decoration:none">Menu</a>
+        <button class="header-button" type="button" data-action="my-orders">
+          My Orders
+        </button>
+        <button class="header-button" type="button" id="accountButton" data-action="account">
+          ♙ Log in
+        </button>
+        <button class="header-button primary" type="button" id="cartToggle" data-action="cart">
+          🛒 Cart <span id="cartCount">0</span>
+        </button>
+      </nav>
     </div>
   </header>
 
-  <nav class="category-nav">
-    <button class="category-link active" data-category="All">All Products</button>
-    <button class="category-link" data-category="Fresh Produce">🥬 Fresh Produce</button>
-    <button class="category-link" data-category="Groceries">🛒 Groceries</button>
-    <button class="category-link" data-category="Beverages">🥤 Beverages</button>
-    <button class="category-link" data-category="Snacks">🍪 Snacks</button>
-    <button class="category-link" data-category="Household Needs">🏠 Household Needs</button>
-  </nav>
-
-  <main class="page">
+  <main id="home" class="page-container">
     <section class="hero">
-      <div class="hero-copy">
-        <span class="eyebrow">WELCOME TO JABIÑAR FOOD STORE</span>
-        <h1>Shop Fresh.<br><span>Live Better.</span></h1>
-        <p>Your everyday grocery favorites in one convenient place.</p>
-        <a href="#products" class="primary-link">Explore Products →</a>
-        <div class="hero-perks">
-          <span>✓ Fresh choices</span>
-          <span>✓ Easy ordering</span>
-          <span>✓ COD available</span>
+      <div>
+        <span class="hero-label">YOUR EVERYDAY GROCERY STORE</span>
+        <h1>Fresh choices for a happier home.</h1>
+        <p>
+          Shop your everyday essentials in one place.
+          Browse your favorites and get your grocery order ready.
+        </p>
+        <a href="#menu" class="hero-button">Shop Now &nbsp; →</a>
+      </div>
+      <div class="hero-emoji" aria-hidden="true">🛒 🥑</div>
+    </section>
+
+    <section class="search-section" aria-label="Search products">
+      <form id="searchForm" class="search-form">
+        <input
+          id="searchInput"
+          name="search"
+          type="search"
+          placeholder="Search fruits, vegetables, rice..."
+          aria-label="Search products"
+        >
+        <button type="submit">Search</button>
+      </form>
+    </section>
+
+    <section id="menu">
+      <div class="section-heading">
+        <div>
+          <h2>Shop by Category</h2>
+          <p>Find what you need for today.</p>
         </div>
       </div>
-      <div class="hero-picture">
-        <img
-          src="https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1000&q=85"
-          alt="Fresh fruits and vegetables">
-        <div class="picture-label">Fresh every day 💜</div>
+
+      <div class="category-list" aria-label="Product categories">
+        <button class="category-button active" type="button" data-category="All">All Products</button>
+        <button class="category-button" type="button" data-category="Fresh Produce">🥬 Fresh Produce</button>
+        <button class="category-button" type="button" data-category="Groceries">🛍️ Groceries</button>
+        <button class="category-button" type="button" data-category="Beverages">🥤 Beverages</button>
+        <button class="category-button" type="button" data-category="Snacks">🍞 Snacks</button>
+        <button class="category-button" type="button" data-category="Household Needs">🧼 Household Needs</button>
       </div>
-    </section>
 
-    <section class="section-heading" id="products">
-      <div>
-        <span class="eyebrow">OUR SELECTION</span>
-        <h2>Shop Your Favorites</h2>
-        <p>Everyday essentials, picked for you.</p>
+      <div class="section-heading">
+        <div>
+          <h2>Our Products</h2>
+          <p>Fresh picks for you and your family.</p>
+        </div>
+        <span id="productCount">Loading...</span>
       </div>
-      <span class="product-count" id="productCount">Loading products...</span>
-    </section>
 
-    <div id="categoryChips" class="category-chips">
-      <button class="chip active" data-category="All">All</button>
-      <button class="chip" data-category="Fresh Produce">Fresh Produce</button>
-      <button class="chip" data-category="Groceries">Groceries</button>
-      <button class="chip" data-category="Beverages">Beverages</button>
-      <button class="chip" data-category="Snacks">Snacks</button>
-      <button class="chip" data-category="Household Needs">Household Needs</button>
-    </div>
-
-    <section id="productGrid" class="product-grid" aria-live="polite">
-      <p class="loading">Loading delicious finds...</p>
-    </section>
-
-    <section class="store-promo">
-      <div>
-        <span class="eyebrow">SHOP WITH EASE</span>
-        <h2>Your groceries, your way.</h2>
-        <p>Choose Cash on Delivery or continue to Maya Sandbox when online payment is configured.</p>
+      <div id="productGrid" class="product-grid" aria-live="polite">
+        <p class="loading">Loading delicious finds...</p>
       </div>
-      <span class="promo-icon">🛍️</span>
     </section>
 
     <section id="ordersSection" class="orders-section hidden">
       <div class="section-heading">
         <div>
-          <span class="eyebrow">YOUR PURCHASES</span>
           <h2>My Orders</h2>
+          <p>Review your order history and status.</p>
         </div>
-        <button id="closeOrders" class="secondary-button" type="button">Close</button>
+        <button class="secondary-button" type="button" data-action="hide-orders" style="width:auto;margin:0">
+          Close
+        </button>
       </div>
-      <div id="ordersList"></div>
+      <div id="ordersList">
+        <p class="loading">Loading your orders...</p>
+      </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <div class="brand footer-brand">
-      <span class="brand-icon">JF</span>
-      <span><strong>JABIÑAR</strong><b>FOOD STORE</b></span>
-    </div>
-    <p>Good food, happy mood. 💜</p>
-    <small>© <span id="year"></span> JABIÑAR FOOD STORE</small>
+  <footer class="site-footer">
+    <strong>JABIÑAR FOOD STORE</strong><br>
+    Good food, happy mood. 💜<br>
+    Fresh choices for everyone.
   </footer>
 
   <div id="modalBackdrop" class="modal-backdrop hidden">
-    <section class="modal" role="dialog" aria-modal="true"
-      aria-labelledby="modalTitle">
-      <button id="closeModal" class="modal-close" type="button"
-        aria-label="Close">×</button>
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <h2 id="modalTitle">Welcome</h2>
+        <button
+          type="button"
+          class="modal-close"
+          data-action="close-modal"
+          aria-label="Close dialog"
+        >×</button>
+      </div>
       <div id="modalContent"></div>
     </section>
   </div>
 
-  <div id="toast" class="toast" role="status"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-  <script src="/script.js"></script>
+  <script src="/script.js" defer></script>
 </body>
-      </html>
-        
+  </html>

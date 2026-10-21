@@ -18,12 +18,11 @@ app.set("trust proxy", 1);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Require a secure secret instead of using a public default.
 if (!SESSION_SECRET) {
   throw new Error("SESSION_SECRET is missing from environment variables.");
 }
 
-// Session store uses the existing Neon PostgreSQL database.
+// Session configuration: Neon PostgreSQL
 app.use(
   session({
     name: "jabinar.sid",
@@ -39,11 +38,13 @@ app.use(
       httpOnly: true,
       secure: isProduction,
       sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000
+      maxAge: 24 * 60 * 60 * 1000,
+      path: "/"
     }
   })
 );
 
+// Authentication middleware
 function requireAuth(req, res, next) {
   if (!req.session.user) {
     if (req.path.startsWith("/api/")) {
@@ -59,15 +60,29 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// Page helpers
 function sendLoginPage(req, res) {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
+  return res.sendFile(
+    path.join(__dirname, "public", "login.html")
+  );
 }
 
 function sendHomePage(req, res) {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+  return res.sendFile(
+    path.join(__dirname, "public", "index.html")
+  );
 }
 
-// Status
+// Login page
+app.get("/login.html", (req, res) => {
+  if (req.session.user) {
+    return res.redirect("/");
+  }
+
+  return sendLoginPage(req, res);
+});
+
+// Server status
 app.get("/api/status", (req, res) => {
   res.json({
     success: true,
@@ -94,7 +109,7 @@ app.get("/api/database-status", async (req, res) => {
   }
 });
 
-// Current login status
+// Check current login status
 app.get("/api/auth/me", (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({
@@ -103,13 +118,13 @@ app.get("/api/auth/me", (req, res) => {
     });
   }
 
-  res.json({
+  return res.json({
     success: true,
     user: req.session.user
   });
 });
 
-// Register a new account
+// Register account
 app.post("/api/auth/register", async (req, res) => {
   try {
     const username =
@@ -159,7 +174,7 @@ app.post("/api/auth/register", async (req, res) => {
       [username, passwordHash]
     );
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Account created successfully. You can now log in."
     });
@@ -173,7 +188,7 @@ app.post("/api/auth/register", async (req, res) => {
       });
     }
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Unable to create account right now."
     });
@@ -218,6 +233,7 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     const account = result.rows[0];
+
     const validPassword = await bcrypt.compare(
       password,
       account.password_hash
@@ -230,7 +246,7 @@ app.post("/api/auth/login", async (req, res) => {
       });
     }
 
-    // Regenerate session ID after successful authentication.
+    // Create a new session after successful login.
     req.session.regenerate((error) => {
       if (error) {
         console.error("Session error:", error.message);
@@ -256,7 +272,7 @@ app.post("/api/auth/login", async (req, res) => {
           });
         }
 
-        res.json({
+        return res.json({
           success: true,
           message: "Login successful.",
           user: req.session.user
@@ -266,9 +282,9 @@ app.post("/api/auth/login", async (req, res) => {
   } catch (error) {
     console.error("Login error:", error.message);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Enable to log in right now."
+      message: "Unable to log in right now."
     });
   }
 });
@@ -281,17 +297,18 @@ app.post("/api/auth/logout", (req, res) => {
 
       return res.status(500).json({
         success: false,
-        message: "Enable to log out."
+        message: "Unable to log out."
       });
     }
 
     res.clearCookie("jabinar.sid", {
+      path: "/",
       httpOnly: true,
       secure: isProduction,
       sameSite: "lax"
     });
 
-    res.json({
+    return res.json({
       success: true,
       message: "Logged out successfully."
     });
@@ -301,15 +318,15 @@ app.post("/api/auth/logout", (req, res) => {
 // Home page: login required
 app.get("/", (req, res) => {
   if (!req.session.user) {
-    return sendLoginPage(req, res);
+    return res.redirect("/login.html");
   }
 
-  sendHomePage(req, res);
+  return sendHomePage(req, res);
 });
 
-// Direct access to index.html also requires login.
+// Direct access to index.html also requires login
 app.get("/index.html", requireAuth, (req, res) => {
-  sendHomePage(req, res);
+  return sendHomePage(req, res);
 });
 
 // Products: login required
@@ -324,26 +341,29 @@ app.get("/api/products", requireAuth, async (req, res) => {
       ORDER BY id ASC
     `);
 
-    res.json({
+    return res.json({
       success: true,
       products: result.rows
     });
   } catch (error) {
     console.error("Products API error:", error.message);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Unable to load products."
     });
   }
 });
 
-// Serve other public assets, but don't automatically serve index.html.
-app.use(express.static(path.join(__dirname, "public"), {
-  index: false
-}));
+// Serve CSS, JavaScript, images and other public assets.
+// Do not automatically serve index.html.
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    index: false
+  })
+);
 
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Server started on port " + PORT);
 });
-      
+                            

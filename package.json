@@ -1,9 +1,10 @@
 
+
 {
   "name": "hosting-ui",
   "version": "1.0.0",
   "private": true,
-  "description": "Live website with Node.js and Neon PostgreSQL",
+  "description": "JABIÑAR FOOD STORE with Node.js and Neon PostgreSQL",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -14,9 +15,10 @@
   "dependencies": {
     "express": "^4.21.2",
     "pg": "^8.16.3",
-    "dotenv": "^16.4.7"
+    "dotenv": "^16.4.7",
+    "bcryptjs": "^2.4.3",
+    "express-session": "^1.18.1",
+    "connect-pg-simple": "^10.0.0"
   }
 }
 
-
-  

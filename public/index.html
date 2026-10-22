@@ -901,6 +901,244 @@
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
+/* JABIÑAR FOOD STORE - Purple Checkout */
+.checkout-page {
+  color: #30205f;
+  font-family: inherit;
+}
+
+.checkout-subtitle,
+.checkout-hint {
+  color: #746493;
+  line-height: 1.6;
+}
+
+.checkout-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.checkout-form,
+.checkout-summary {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid #e6dcff;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(86, 51, 151, 0.08);
+}
+
+.checkout-section {
+  margin-bottom: 22px;
+}
+
+.checkout-section h3,
+.checkout-summary h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  color: #38216e;
+}
+
+.checkout-step {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #7141c5;
+  color: #fff;
+}
+
+.checkout-form label:not(.checkout-payment-card) {
+  display: block;
+  margin: 12px 0 6px;
+  font-weight: 600;
+}
+
+.checkout-form input:not([type="radio"]),
+.checkout-form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd0ff;
+  border-radius: 11px;
+  background: #fcfaff;
+  color: #30205f;
+  font: inherit;
+}
+
+.checkout-form input:focus,
+.checkout-form textarea:focus {
+  outline: 2px solid #a98bea;
+  border-color: #7141c5;
+}
+
+.checkout-payment-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.checkout-payment-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid #e0d5fa;
+  border-radius: 12px;
+  background: #fcfaff;
+  cursor: pointer;
+}
+
+.checkout-payment-card:has(input:checked) {
+  border: 2px solid #7141c5;
+  background: #f3edff;
+  padding: 11px;
+}
+
+.checkout-payment-card input {
+  accent-color: #7141c5;
+  margin-top: 4px;
+}
+
+.checkout-payment-card span:last-child {
+  display: grid;
+  gap: 5px;
+}
+
+.checkout-payment-card strong {
+  font-size: 13px;
+}
+
+.checkout-payment-card small {
+  color: #746493;
+  line-height: 1.4;
+}
+
+.checkout-payment-icon {
+  font-size: 22px;
+}
+
+.checkout-secure {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 13px;
+  margin: 16px 0;
+  border-radius: 12px;
+  background: #f1ebff;
+  color: #6335b0;
+}
+
+.checkout-secure span {
+  display: grid;
+  gap: 4px;
+}
+
+.checkout-secure small {
+  color: #746493;
+}
+
+.checkout-place-order {
+  width: 100%;
+  padding: 15px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #8554d6, #6033ad);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.checkout-place-order:hover {
+  filter: brightness(1.06);
+}
+
+.checkout-place-order:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.checkout-message {
+  color: #b42318;
+  overflow-wrap: anywhere;
+}
+
+.checkout-summary {
+  background: linear-gradient(180deg, #fff, #fcfaff);
+}
+
+.checkout-summary h3 {
+  padding-bottom: 12px;
+  border-bottom: 2px solid #eee6ff;
+}
+
+.checkout-item-count {
+  color: #746493;
+  font-size: 13px;
+}
+
+.checkout-summary-item,
+.checkout-total-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee6ff;
+}
+
+.checkout-item-details {
+  display: grid;
+  gap: 5px;
+}
+
+.checkout-item-details small {
+  color: #746493;
+}
+
+.checkout-summary-item > strong,
+.checkout-total-row > strong {
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.checkout-grand-total {
+  margin-top: 6px;
+  color: #6033ad;
+  font-size: 18px;
+  border-bottom: 0;
+}
+
+.checkout-summary-note {
+  padding: 12px;
+  border-radius: 10px;
+  background: #f1ebff;
+  color: #6335b0;
+  line-height: 1.5;
+}
+
+@media (max-width: 650px) {
+  .checkout-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .checkout-form,
+  .checkout-summary {
+    padding: 14px;
+  }
+
+  .checkout-payment-options {
+    grid-template-columns: 1fr;
+  }
+}
+  
   <script src="/script.js" defer></script>
 </body>
   </html>

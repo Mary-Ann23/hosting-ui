@@ -997,6 +997,45 @@
   }
     }
     
+   
+/* ===== FORCE PURPLE ADD TO CART ===== */
+
+button.add-to-cart,
+.product-card .add-to-cart,
+.product-bottom .add-to-cart,
+#productGrid .add-to-cart {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: linear-gradient(135deg, #8b68df, #6340b3) !important;
+  background-color: #7651c9 !important;
+  color: #ffffff !important;
+  border: 1px solid #7651c9 !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+  box-shadow: 0 3px 8px rgba(99, 64, 179, .2) !important;
+}
+
+button.add-to-cart:hover,
+.product-card .add-to-cart:hover,
+.product-bottom .add-to-cart:hover,
+#productGrid .add-to-cart:hover {
+  background: linear-gradient(135deg, #7651c9, #5634a5) !important;
+  color: #ffffff !important;
+}
+
+@media (max-width: 650px) {
+  button.add-to-cart,
+  .product-card .add-to-cart,
+  .product-bottom .add-to-cart,
+  #productGrid .add-to-cart {
+    padding: 9px 10px !important;
+    font-size: 11px !important;
+  }
+    }
     
   
   </style>

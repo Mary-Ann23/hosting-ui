@@ -775,14 +775,16 @@
 
   
 
-/* ===== UNIFIED PURPLE CART DESIGN ===== */
+
+/* ===== PURPLE ADD TO CART ===== */
 
 .add-to-cart {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 10px 12px;
+  width: 100%;
+  min-height: 40px;
+  padding: 9px 8px;
   border: 1px solid #7651c9;
   border-radius: 10px;
   background: linear-gradient(135deg, #8b68df, #6340b3);
@@ -790,14 +792,15 @@
   font-size: 12px;
   font-weight: 800;
   text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  box-sizing: border-box;
   box-shadow: 0 3px 8px rgba(99, 64, 179, .16);
-  transition: .2s ease;
 }
 
 .add-to-cart:hover {
   background: linear-gradient(135deg, #7651c9, #5634a5);
   color: #fff;
-  transform: translateY(-1px);
 }
 
 .add-to-cart:active {
@@ -809,43 +812,50 @@
   border-color: #e8e2f3;
   color: #81778f;
   box-shadow: none;
-  transform: none;
 }
 
-/* CART CONTENT */
+/* ===== CART LAYOUT ===== */
 
 #modalContent {
   color: #282238;
   line-height: 1.5;
   overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 #modalContent .cart-items {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 #modalContent .cart-item {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  padding: 14px;
+  gap: 10px;
+  width: 100%;
+  padding: 13px;
   border: 1px solid #ece7f4;
   border-radius: 15px;
   background: #fff;
+  box-sizing: border-box;
 }
 
 #modalContent .cart-item > div:first-child {
+  grid-column: 1;
+  grid-row: 1;
   min-width: 0;
 }
 
 #modalContent .cart-item > div:first-child strong {
   display: block;
   color: #282238;
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 #modalContent .cart-item p {
@@ -855,8 +865,11 @@
 }
 
 #modalContent .cart-item > strong {
+  grid-column: 2;
+  grid-row: 1;
   color: #5634a5;
-  font-size: 14px;
+  font-size: 13px;
+  text-align: right;
   white-space: nowrap;
 }
 
@@ -865,20 +878,22 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 14px;
-  margin-top: 3px;
+  gap: 12px;
+  margin-top: 4px;
 }
 
 #modalContent .quantity-controls span {
-  min-width: 20px;
-  text-align: center;
+  min-width: 22px;
   color: #282238;
+  text-align: center;
   font-weight: 800;
 }
 
 #modalContent .quantity-controls button {
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
   width: 36px;
   height: 36px;
   padding: 0;
@@ -901,6 +916,25 @@
   color: #5634a5;
   font-size: 19px;
 }
+
+/* ===== MOBILE FIX ===== */
+
+@media (max-width: 380px) {
+  #modalContent .cart-item {
+    padding: 10px;
+    gap: 7px;
+  }
+
+  #modalContent .cart-item > strong {
+    font-size: 12px;
+  }
+
+  #modalContent .quantity-controls {
+    gap: 10px;
+  }
+}
+    
+
 
 /* PURPLE CHECKOUT AND CLEAR CART */
 

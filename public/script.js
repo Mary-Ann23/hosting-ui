@@ -614,6 +614,20 @@ function showCheckout() {
     return;
   }
 
+
+function showCheckout() {
+  if (!currentUser) {
+    openModal("Log in Required", `
+      <div class="checkout-message">
+        <p>Please log in before checking out.</p>
+        <button type="button" data-action="auth-tab" data-mode="login">
+          Log in
+        </button>
+      </div>
+    `);
+    return;
+  }
+
   const items = getCartItems();
 
   if (!items.length) {
@@ -621,55 +635,170 @@ function showCheckout() {
     return;
   }
 
-  openModal("Checkout", `
-    <form id="checkoutForm">
-      <label for="checkoutName">Full Name</label>
-      <input
-        id="checkoutName"
-        name="full_name"
-        type="text"
-        required
-      >
+  const subtotal = items.reduce(
+    (sum, item) => sum + Number(item.price) * item.quantity,
+    0
+  );
 
-      <label for="checkoutPhone">Contact Number</label>
-      <input
-        id="checkoutPhone"
-        name="contact_number"
-        type="tel"
-        required
-      >
+  const itemCount = items.reduce(
+    (sum, item) => sum + item.quantity,
+    0
+  );
 
-      <label for="checkoutAddress">Delivery Address</label>
-      <textarea
-        id="checkoutAddress"
-        name="address"
-        required
-      ></textarea>
+  openModal("💜 Checkout", `
+    <div class="checkout-page">
+      <p class="checkout-subtitle">
+        Complete your order and enjoy your favorite food!
+      </p>
 
-      <label for="checkoutInstructions">Delivery Instructions (optional)</label>
-      <textarea
-        id="checkoutInstructions"
-        name="instructions"
-      ></textarea>
+      <div class="checkout-layout">
+        <form id="checkoutForm" class="checkout-form">
 
-      <label for="paymentMethod">Payment Method</label>
-      <select id="paymentMethod" name="payment_method" required>
-        <option value="COD">Cash on Delivery (COD)</option>
-        <option value="MAYA">Maya</option>
-      </select>
+          <section class="checkout-section">
+            <h3>
+              <span class="checkout-step">1</span>
+              Delivery Information
+            </h3>
+            <p class="checkout-hint">
+              Please provide your delivery details.
+            </p>
 
-      <p>Total: <strong>${money(
-        items.reduce(
-          (sum, item) => sum + Number(item.price) * item.quantity,
-          0
-        )
-      )}</strong></p>
+            <label for="checkoutName">Full Name</label>
+            <input
+              id="checkoutName"
+              name="full_name"
+              type="text"
+              placeholder="Enter your full name"
+              autocomplete="name"
+              required
+            >
 
-      <button type="submit">Place Order</button>
-      <p id="checkoutMessage" role="status"></p>
-    </form>
+            <label for="checkoutPhone">Phone Number</label>
+            <input
+              id="checkoutPhone"
+              name="contact_number"
+              type="tel"
+              placeholder="09XX XXX XXXX"
+              autocomplete="tel"
+              required
+            >
+
+            <label for="checkoutAddress">Delivery Address</label>
+            <textarea
+              id="checkoutAddress"
+              name="address"
+              placeholder="House No., Street, Barangay, City"
+              autocomplete="street-address"
+              required
+              rows="2"
+            ></textarea>
+
+            <label for="checkoutInstructions">
+              Delivery Notes (Optional)
+            </label>
+            <textarea
+              id="checkoutInstructions"
+              name="instructions"
+              placeholder="Landmark or special instructions"
+              rows="2"
+            ></textarea>
+          </section>
+
+          <section class="checkout-section">
+            <h3>
+              <span class="checkout-step">2</span>
+              Payment Method
+            </h3>
+            <p class="checkout-hint">
+              Choose your preferred payment option.
+            </p>
+
+            <div class="checkout-payment-options">
+              <label class="checkout-payment-card">
+                <input
+                  type="radio"
+                  name="payment_method"
+                  value="COD"
+                  checked
+                >
+                <span class="checkout-payment-icon">💵</span>
+                <span>
+                  <strong>Cash on Delivery</strong>
+                  <small>Pay when your order arrives.</small>
+                </span>
+              </label>
+
+              <label class="checkout-payment-card">
+                <input
+                  type="radio"
+                  name="payment_method"
+                  value="MAYA"
+                >
+                <span class="checkout-payment-icon">💳</span>
+                <span>
+                  <strong>Maya</strong>
+                  <small>Pay securely through Maya.</small>
+                </span>
+              </label>
+            </div>
+          </section>
+
+          <div class="checkout-secure">
+            🔒 <span>
+              <strong>Safe and secure checkout</strong>
+              <small>Your order information is submitted securely.</small>
+            </span>
+          </div>
+
+          <button class="checkout-place-order" type="submit">
+            🔒 Place Order · ${money(subtotal)}
+          </button>
+
+          <p id="checkoutMessage" role="status"
+             class="checkout-message"></p>
+        </form>
+
+        <aside class="checkout-summary">
+          <h3>🛒 Order Summary</h3>
+          <p class="checkout-item-count">
+            ${itemCount} item${itemCount === 1 ? "" : "s"}
+          </p>
+
+          <div class="checkout-summary-items">
+            ${items.map((item) => `
+              <div class="checkout-summary-item">
+                <div class="checkout-item-details">
+                  <strong>${escapeHTML(item.name)}</strong>
+                  <small>
+                    ${item.quantity} × ${money(item.price)}
+                  </small>
+                </div>
+                <strong>
+                  ${money(Number(item.price) * item.quantity)}
+                </strong>
+              </div>
+            `).join("")}
+          </div>
+
+          <div class="checkout-total-row">
+            <span>Subtotal</span>
+            <strong>${money(subtotal)}</strong>
+          </div>
+
+          <div class="checkout-total-row checkout-grand-total">
+            <span>Total</span>
+            <strong>${money(subtotal)}</strong>
+          </div>
+
+          <p class="checkout-summary-note">
+            💜 Thank you for choosing JABIÑAR FOOD STORE!
+          </p>
+        </aside>
+      </div>
+    </div>
   `);
 }
+  
 
 async function submitCheckout(event) {
   event.preventDefault();

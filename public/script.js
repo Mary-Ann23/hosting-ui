@@ -934,8 +934,40 @@ if (searchInput) {
   });
 }
 
+
 document.addEventListener("submit", async (event) => {
-   (event) => {
+  if (event.target.id === "authForm") {
+    await submitAuth(event);
+  }
+
+  if (event.target.id === "checkoutForm") {
+    await submitCheckout(event);
+  }
+});
+
+if (modalBackdrop) {
+  modalBackdrop.addEventListener("click", (event) => {
+    if (event.target === modalBackdrop) {
+      closeModal();
+    }
+  });
+}
+
+async function initializeStore() {
+  updateCartCount();
+  await checkLoginStatus();
+  handleMayaReturn();
+  await loadProducts();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initializeStore, {
+    once: true
+  });
+} else {
+  initializeStore();
+}
+
   if (event.target.id === "authForm") {
     await submitAuth(event);
   }

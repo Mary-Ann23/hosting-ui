@@ -269,14 +269,17 @@ function renderProducts() {
             : "Out of stock"}
         </p>
 
-        <button
-          type="button"
-          data-action="add"
-          data-id="${escapeHTML(product.id)}"
-          ${Number(product.stock) <= 0 ? "disabled" : ""}
-        >
-          Add to Cart
-        </button>
+        
+<button
+  type="button"
+  class="add-to-cart"
+  data-action="add"
+  data-id="${escapeHTML(product.id)}"
+  ${Number(product.stock) <= 0 ? "disabled" : ""}
+>
+  Add to Cart
+</button>
+
       </div>
     </article>
   `).join("");

@@ -603,16 +603,7 @@ async function logout() {
   }
 }
 
-function showCheckout() {
-  if (!currentUser) {
-    openModal("Log in Required", `
-      <p>Please log in before checking out.</p>
-      <button type="button" data-action="auth-tab" data-mode="login">
-        Log in
-      </button>
-    `);
-    return;
-  }
+
 
 
 function showCheckout() {

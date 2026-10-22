@@ -344,6 +344,7 @@ function addToCart(productId) {
   showToast(`${product.name} added to cart.`);
 }
 
+
 function getCartItems() {
   return cart.map((item) => {
     const product = products.find(

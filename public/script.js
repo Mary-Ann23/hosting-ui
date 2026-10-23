@@ -179,32 +179,44 @@ async function loadProducts() {
 
     products = data.products;
 
-    console.log("Products loaded:", products.length);
+console.log("Products loaded:", products.length);
+console.log("renderProducts type:", typeof renderProducts);
 
-    renderProducts();
+try {
+  renderProducts();
+  console.log("Products rendered successfully");
+} catch (error) {
+  console.error("RENDER PRODUCTS ERROR:", error);
 
-    if (count) {
-      count.textContent = `${products.length} products`;
-    }
-  } catch (error) {
-    console.error("Product loading failed:", error);
+  grid.innerHTML = `
+    <div class="empty-state">
+      <p>Products were loaded, but could not be displayed.</p>
+      <p>${escapeHTML(error.message)}</p>
+    </div>
+  `;
+}
 
-    grid.innerHTML = `
-      <div class="empty-state">
-        <p>Unable to load products.</p>
-        <p>${escapeHTML(error.message)}</p>
-        <button type="button" data-action="retry-products">
-          Try Again
-        </button>
-      </div>
-    `;
+if (count) {
+  count.textContent = `${products.length} products`;
+}
+} catch (error) {
+  console.error("Product loading failed:", error);
 
-    if (count) {
-      count.textContent = "Products available";
-    }
+  grid.innerHTML = `
+    <div class="empty-state">
+      <p>Unable to load products.</p>
+      <p>${escapeHTML(error.message)}</p>
+      <button type="button" data-action="retry-products">
+        Try Again
+      </button>
+    </div>
+  `;
+
+  if (count) {
+    count.textContent = "Products unavailable";
   }
-      }
-
+}
+}
 
 function categoryMatches(product) {
   const category = String(product.category || "")

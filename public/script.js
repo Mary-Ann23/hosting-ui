@@ -496,63 +496,77 @@ const total = items.reduce(
 );
 
 const content = items.length
-?   <div class="cart-items">   ${items.map((item) =>
-<div class="cart-item">
-<div class="cart-product-info">
-<strong>${escapeHTML(item.name)}</strong>
-<p>${money(item.price)} each</p>
-</div>
 
-<strong class="cart-item-price">  
-          ${money(Number(item.price) * item.quantity)}  
-        </strong>  
+  
+function renderCart() {
+  const items = getCartItems();
 
-        <div class="quantity-controls">  
-          <button  
-            type="button"  
-            data-action="quantity"  
-            data-id="${escapeHTML(item.id)}"  
-            data-change="-1"  
-            aria-label="Decrease quantity"  
-          >−</button>  
+  const total = items.reduce(
+    (sum, item) => sum + Number(item.price) * item.quantity,
+    0
+  );
 
-          <span>${item.quantity}</span>  
+  const content = items.length
+    ? `
+      <div class="cart-items">
+        ${items.map((item) => `
+          <div class="cart-item">
+            <div class="cart-product-info">
+              <strong>${escapeHTML(item.name)}</strong>
+              <p>${money(item.price)} each</p>
+            </div>
 
-          <button  
-            type="button"  
-            data-action="quantity"  
-            data-id="${escapeHTML(item.id)}"  
-            data-change="1"  
-            aria-label="Increase quantity"  
-          >+</button>  
-        </div>  
-      </div>  
-    `).join("")}  
-  </div>  
+            <strong class="cart-item-price">
+              ${money(Number(item.price) * item.quantity)}
+            </strong>
 
-  <hr>  
+            <div class="quantity-controls">
+              <button
+                type="button"
+                data-action="quantity"
+                data-id="${escapeHTML(String(item.id))}"
+                data-change="-1"
+                aria-label="Decrease quantity"
+              >−</button>
 
-  <h3>Total: ${money(total)}</h3>  
+              <span>${item.quantity}</span>
 
-  <button type="button" data-action="checkout">  
-    Proceed to Checkout  
-  </button>  
+              <button
+                type="button"
+                data-action="quantity"
+                data-id="${escapeHTML(String(item.id))}"
+                data-change="1"
+                aria-label="Increase quantity"
+              >+</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
 
-  <button type="button" data-action="clear-cart">  
-    Clear Cart  
-  </button>  
-`  
-: `  
-  <div class="empty-state">  
-    <p>Your cart is empty.</p>  
-    <button type="button" data-action="close-modal">  
-      Continue Shopping  
-    </button>  
-  </div>  
-`;
+      <hr>
 
-openModal("My Cart", content);
+      <h3>Total: ${money(total)}</h3>
+
+      <button type="button" data-action="checkout">
+        Proceed to Checkout
+      </button>
+
+      <button type="button" data-action="clear-cart">
+        Clear Cart
+      </button>
+    `
+    : `
+      <div class="empty-state">
+        <p>Your cart is empty.</p>
+        <button type="button" data-action="close-modal">
+          Continue Shopping
+        </button>
+      </div>
+    `;
+
+  openModal("My Cart", content);
 }
+  
 
 /* =========================================
 LOGIN AND REGISTRATION

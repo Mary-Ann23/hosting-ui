@@ -1,6 +1,13 @@
 
 "use strict";
 
+/* =========================================
+   JABIÑAR FOOD STORE
+   Main frontend script
+========================================= */
+
+const CART_KEY = "jfs_cart";
+
 const $ = (selector) => document.querySelector(selector);
 
 const productGrid = $("#productGrid");
@@ -19,7 +26,9 @@ let currentUser = null;
 let cart = loadCart();
 let toastTimer = null;
 
-const CART_KEY = "jfs_cart";
+/* =========================================
+   HELPERS
+========================================= */
 
 function escapeHTML(value) {
   const replacements = {
@@ -46,9 +55,12 @@ function money(value) {
 async function apiRequest(url, options = {}) {
   const response = await fetch(url, {
     credentials: "same-origin",
+    cache: "no-store",
     ...options,
     headers: {
-      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.body
+        ? { "Content-Type": "application/json" }
+        : {}),
       ...(options.headers || {})
     }
   });
@@ -103,9 +115,16 @@ function closeModal() {
   }
 }
 
+/* =========================================
+   CART STORAGE AND ACCOUNT
+========================================= */
+
 function loadCart() {
   try {
-    const saved = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    const saved = JSON.parse(
+      localStorage.getItem(CART_KEY) || "[]"
+    );
+
     return Array.isArray(saved) ? saved : [];
   } catch {
     return [];
@@ -113,7 +132,13 @@ function loadCart() {
 }
 
 function saveCart() {
-  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  try {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  } catch (error) {
+    console.error("Unable to save cart:", error);
+    showToast("Unable to save your cart on this device.");
+  }
+
   updateCartCount();
 }
 
@@ -150,72 +175,73 @@ async function checkLoginStatus() {
   return currentUser;
 }
 
+async function logout() {
+  try {
+    await apiRequest("/api/auth/logout", {
+      method: "POST"
+    });
+
+    currentUser = null;
+    updateAccountButton();
+    closeModal();
+
+    cart = [];
+    saveCart();
+
+    window.location.replace("/login.html");
+  } catch (error) {
+    showToast(error.message);
+  }
+}
+
+/* =========================================
+   PRODUCTS
+========================================= */
+
 async function loadProducts() {
-  const grid = document.querySelector("#productGrid");
-  const count = document.querySelector("#productCount");
+  const grid = $("#productGrid");
+  const count = $("#productCount");
 
   if (!grid) {
-    console.error("Product grid not found!");
+    console.error("Product grid #productGrid was not found.");
     return;
   }
 
-  grid.innerHTML = "<p>Connecting to products...</p>";
+  grid.innerHTML = "<p>Loading delicious finds...</p>";
 
   try {
-    const response = await fetch("/api/products", {
-      credentials: "same-origin",
-      cache: "no-store"
-    });
+    const data = await apiRequest("/api/products");
 
-    if (!response.ok) {
-      throw new Error(`Server error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.success || !Array.isArray(data.products)) {
-      throw new Error("Invalid products response.");
+    if (!Array.isArray(data.products)) {
+      throw new Error("The products response is invalid.");
     }
 
     products = data.products;
 
-console.log("Products loaded:", products.length);
-console.log("renderProducts type:", typeof renderProducts);
+    console.log("Products loaded:", products.length);
 
-try {
-  renderProducts();
-  console.log("Products rendered successfully");
-} catch (error) {
-  console.error("RENDER PRODUCTS ERROR:", error);
+    renderProducts();
 
-  grid.innerHTML = `
-    <div class="empty-state">
-      <p>Products were loaded, but could not be displayed.</p>
-      <p>${escapeHTML(error.message)}</p>
-    </div>
-  `;
-}
+    if (count) {
+      count.textContent = `${products.length} products`;
+    }
+  } catch (error) {
+    console.error("Product loading failed:", error);
 
-if (count) {
-  count.textContent = `${products.length} products`;
-}
-} catch (error) {
-  console.error("Product loading failed:", error);
+    grid.innerHTML = `
+      <div class="empty-state">
+        <h3>Unable to load products</h3>
+        <p>${escapeHTML(error.message)}</p>
+        <button type="button" data-action="retry-products">
+          Try Again
+        </button>
+      </div>
+    `;
 
-  grid.innerHTML = `
-    <div class="empty-state">
-      <p>Unable to load products.</p>
-      <p>${escapeHTML(error.message)}</p>
-      <button type="button" data-action="retry-products">
-        Try Again
-      </button>
-    </div>
-  `;
-
-  if (count) {
-    count.textContent = "Products unavailable";
+    if (count) {
+      count.textContent = "Products unavailable";
+    }
   }
-}
 }
 
 function categoryMatches(product) {
@@ -228,7 +254,12 @@ function categoryMatches(product) {
   }
 
   const categoryAliases = {
-    "Fresh Produce": ["fresh produce", "produce", "fruits", "vegetables"],
+    "Fresh Produce": [
+      "fresh produce",
+      "produce",
+      "fruits",
+      "vegetables"
+    ],
     "Groceries": ["groceries", "grocery"],
     "Beverages": ["beverages", "drinks", "drink"],
     "Snacks": ["snacks", "snack"],
@@ -260,10 +291,9 @@ function getFilteredProducts() {
   });
 }
 
-
 function renderProducts() {
-  const grid = document.querySelector("#productGrid");
-  const count = document.querySelector("#productCount");
+  const grid = $("#productGrid");
+  const count = $("#productCount");
 
   if (!grid) return;
 
@@ -295,6 +325,7 @@ function renderProducts() {
     const id = escapeHTML(product.id);
 
     const imageUrl = String(product.image_url || "").trim();
+
     const safeImageUrl =
       /^https:\/\/[^\s"'<>]+$/i.test(imageUrl)
         ? escapeHTML(imageUrl)
@@ -339,50 +370,47 @@ function renderProducts() {
   }).join("");
 }
 
-function renderCart() {
-  const items = getCartItems();
+function setCategory(category) {
+  currentCategory = category || "All";
+  renderProducts();
 
-  const content = items.length
-    ? `
-      <div class="cart-items">
-        ${items.map((item) => `
-          <div class="cart-item">
-            <div class="cart-product-info">
-              <strong>${escapeHTML(item.name)}</strong>
-              <p>${money(item.price)} each</p>
-            </div>
-
-            <strong class="cart-item-price">
-              ${money(Number(item.price) * item.quantity)}
-            </strong>
-
-            <div class="quantity-controls">
-              <button
-                type="button"
-                data-action="quantity"
-                data-id="${escapeHTML(item.id)}"
-                data-change="-1"
-                aria-label="Decrease quantity"
-              >−</button>
-
-              <span>${item.quantity}</span>
-
-              <button
-                type="button"
-                data-action="quantity"
-                data-id="${escapeHTML(item.id)}"
-                data-change="1"
-                aria-label="Increase quantity"
-              >+</button>
-            </div>
-          </div>
-        `).join("")}
-      </div>
-    `
-    : `<p>Your cart is empty.</p>`;
-
-  openModal("My Cart", content);
+  document.querySelectorAll("[data-category]").forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.category === currentCategory
+    );
+  });
 }
+
+function clearSearch() {
+  currentSearch = "";
+
+  if (searchInput) {
+    searchInput.value = "";
+  }
+
+  renderProducts();
+}
+
+/* =========================================
+   SHOPPING CART
+========================================= */
+
+function getCartItems() {
+  return cart.map((item) => {
+    const product = products.find(
+      (entry) => String(entry.id) === String(item.productId)
+    );
+
+    return product
+      ? {
+          ...product,
+          quantity: Number(item.quantity || 1)
+        }
+      : null;
+  }).filter(Boolean);
+}
+
 function addToCart(productId) {
   const product = products.find(
     (item) => String(item.id) === String(productId)
@@ -422,22 +450,6 @@ function addToCart(productId) {
   showToast(`${product.name} added to cart.`);
 }
 
-
-function getCartItems() {
-  return cart.map((item) => {
-    const product = products.find(
-      (entry) => String(entry.id) === String(item.productId)
-    );
-
-    return product
-      ? {
-          ...product,
-          quantity: Number(item.quantity || 1)
-        }
-      : null;
-  }).filter(Boolean);
-}
-
 function changeQuantity(productId, change) {
   const item = cart.find(
     (entry) => String(entry.productId) === String(productId)
@@ -450,7 +462,7 @@ function changeQuantity(productId, change) {
   );
 
   const maxStock = Number(product?.stock || 0);
-  const newQuantity = item.quantity + change;
+  const newQuantity = Number(item.quantity) + change;
 
   if (newQuantity <= 0) {
     cart = cart.filter(
@@ -470,6 +482,7 @@ function clearCart() {
   cart = [];
   saveCart();
   renderCart();
+  showToast("Cart cleared.");
 }
 
 function renderCart() {
@@ -482,38 +495,17 @@ function renderCart() {
 
   const content = items.length
     ? `
-      
-<div class="cart-item">
-  <div class="cart-product-info">
-    <strong>${escapeHTML(item.name)}</strong>
-    <p>${money(item.price)} each</p>
-  </div>
+      <div class="cart-items">
+        ${items.map((item) => `
+          <div class="cart-item">
+            <div class="cart-product-info">
+              <strong>${escapeHTML(item.name)}</strong>
+              <p>${money(item.price)} each</p>
+            </div>
 
-  <strong class="cart-item-price">
-    ${money(Number(item.price) * item.quantity)}
-  </strong>
-
-  <div class="quantity-controls">
-    <button
-      type="button"
-      data-action="quantity"
-      data-id="${escapeHTML(item.id)}"
-      data-change="-1"
-      aria-label="Decrease quantity"
-    >−</button>
-
-    <span>${item.quantity}</span>
-
-    <button
-      type="button"
-      data-action="quantity"
-      data-id="${escapeHTML(item.id)}"
-      data-change="1"
-      aria-label="Increase quantity"
-    >+</button>
-  </div>
-</div>
-
+            <strong class="cart-item-price">
+              ${money(Number(item.price) * item.quantity)}
+            </strong>
 
             <div class="quantity-controls">
               <button
@@ -534,8 +526,6 @@ function renderCart() {
                 aria-label="Increase quantity"
               >+</button>
             </div>
-
-            <strong>${money(Number(item.price) * item.quantity)}</strong>
           </div>
         `).join("")}
       </div>
@@ -564,13 +554,16 @@ function renderCart() {
   openModal("My Cart", content);
 }
 
+/* =========================================
+   LOGIN AND REGISTRATION
+========================================= */
+
 function showAccount() {
   if (currentUser) {
     logout();
-    return;
+  } else {
+    renderAuthForm("login");
   }
-
-  renderAuthForm("login");
 }
 
 function renderAuthForm(mode = "login") {
@@ -623,7 +616,7 @@ function renderAuthForm(mode = "login") {
           </button>
         </div>
 
-        <button type="submit" ${isRegister ? 'data-mode="register"' : 'data-mode="login"'}>
+        <button type="submit" data-mode="${isRegister ? "register" : "login"}">
           ${isRegister ? "Create Account" : "Log in"}
         </button>
 
@@ -639,8 +632,8 @@ async function submitAuth(event) {
   const form = event.target;
   if (form.id !== "authForm") return;
 
-  const username = form.username.value.trim();
-  const password = form.password.value;
+  const username = form.elements.username.value.trim();
+  const password = form.elements.password.value;
   const submitButton = form.querySelector('button[type="submit"]');
   const message = $("#authMessage");
   const mode = submitButton?.dataset.mode || "login";
@@ -649,7 +642,7 @@ async function submitAuth(event) {
   if (message) message.textContent = "Please wait...";
 
   try {
-    const endpoint = mode === "register"ñ
+    const endpoint = mode === "register"
       ? "/api/auth/register"
       : "/api/auth/login";
 
@@ -660,6 +653,7 @@ async function submitAuth(event) {
 
     if (mode === "register") {
       renderAuthForm("login");
+
       const authMessage = $("#authMessage");
 
       if (authMessage) {
@@ -675,6 +669,7 @@ async function submitAuth(event) {
     closeModal();
 
     showToast("Login successful!");
+
     await loadProducts();
   } catch (error) {
     if (message) {
@@ -688,27 +683,9 @@ async function submitAuth(event) {
   }
 }
 
-async function logout() {
-  try {
-    await apiRequest("/api/auth/logout", {
-      method: "POST"
-    });
-
-    currentUser = null;
-    updateAccountButton();
-    closeModal();
-
-    showToast("You have logged out.");
-
-    // The home page requires login. Return to the login page.
-    window.location.href = "/login.html";
-  } catch (error) {
-    showToast(error.message);
-  }
-}
-
-
-
+/* =========================================
+   CHECKOUT
+========================================= */
 
 function showCheckout() {
   if (!currentUser) {
@@ -743,17 +720,17 @@ function showCheckout() {
   openModal("💜 Checkout", `
     <div class="checkout-page">
       <p class="checkout-subtitle">
-        Complete your order and enjoy your favorite food!
+        Complete your order and enjoy your favorite products!
       </p>
 
       <div class="checkout-layout">
         <form id="checkoutForm" class="checkout-form">
-
           <section class="checkout-section">
             <h3>
               <span class="checkout-step">1</span>
               Delivery Information
             </h3>
+
             <p class="checkout-hint">
               Please provide your delivery details.
             </p>
@@ -804,6 +781,7 @@ function showCheckout() {
               <span class="checkout-step">2</span>
               Payment Method
             </h3>
+
             <p class="checkout-hint">
               Choose your preferred payment option.
             </p>
@@ -832,7 +810,7 @@ function showCheckout() {
                 <span class="checkout-payment-icon">💳</span>
                 <span>
                   <strong>Maya</strong>
-                  <small>Pay securely through Maya.</small>
+                  <small>Continue through the configured Maya checkout.</small>
                 </span>
               </label>
             </div>
@@ -840,13 +818,13 @@ function showCheckout() {
 
           <div class="checkout-secure">
             🔒 <span>
-              <strong>Safe and secure checkout</strong>
+              <strong>Safe checkout</strong>
               <small>Your order information is submitted securely.</small>
             </span>
           </div>
 
           <button class="checkout-place-order" type="submit">
-            🔒 Place Order · ${money(subtotal)}
+            Place Order · ${money(subtotal)}
           </button>
 
           <p id="checkoutMessage" role="status"
@@ -864,9 +842,7 @@ function showCheckout() {
               <div class="checkout-summary-item">
                 <div class="checkout-item-details">
                   <strong>${escapeHTML(item.name)}</strong>
-                  <small>
-                    ${item.quantity} × ${money(item.price)}
-                  </small>
+                  <small>${item.quantity} × ${money(item.price)}</small>
                 </div>
                 <strong>
                   ${money(Number(item.price) * item.quantity)}
@@ -893,7 +869,6 @@ function showCheckout() {
     </div>
   `);
 }
-  
 
 async function submitCheckout(event) {
   event.preventDefault();
@@ -916,10 +891,10 @@ async function submitCheckout(event) {
   if (message) message.textContent = "Processing your order...";
 
   const payload = {
-    full_name: form.full_name.value.trim(),
-    contact_number: form.contact_number.value.trim(),
-    address: form.address.value.trim(),
-    instructions: form.instructions.value.trim(),
+    full_name: form.elements.full_name.value.trim(),
+    contact_number: form.elements.contact_number.value.trim(),
+    address: form.elements.address.value.trim(),
+    instructions: form.elements.instructions.value.trim(),
     items: items.map((item) => ({
       product_id: item.id,
       quantity: item.quantity
@@ -927,7 +902,7 @@ async function submitCheckout(event) {
   };
 
   try {
-    const paymentMethod = form.payment_method.value;
+    const paymentMethod = form.elements.payment_method.value;
 
     if (paymentMethod === "MAYA") {
       const data = await apiRequest("/api/checkout/maya", {
@@ -936,12 +911,13 @@ async function submitCheckout(event) {
       });
 
       if (data.checkoutUrl) {
-        // Keep the cart until payment/order status is confirmed.
         window.location.href = data.checkoutUrl;
         return;
       }
 
-      throw new Error("The server did not return a Maya checkout URL.");
+      throw new Error(
+        "The server did not return a Maya checkout URL."
+      );
     }
 
     const data = await apiRequest("/api/orders", {
@@ -970,9 +946,11 @@ async function submitCheckout(event) {
   }
 }
 
-async function showOrders() {
-  closeModal();
+/* =========================================
+   MY ORDERS
+========================================= */
 
+async function showOrders() {
   const section = $("#ordersSection");
   const list = $("#ordersList");
 
@@ -1039,8 +1017,13 @@ async function showOrders() {
   }
 }
 
+/* =========================================
+   MAYA RETURN MESSAGE
+========================================= */
+
 function handleMayaReturn() {
   const params = new URLSearchParams(window.location.search);
+
   const hasMayaParams = [
     "payment",
     "status",
@@ -1050,28 +1033,37 @@ function handleMayaReturn() {
 
   if (!hasMayaParams) return;
 
-  // URL parameters alone do not prove that payment succeeded.
   showToast(
-    "Returned from Maya. Please check My Orders for the latest order status."
+    "Returned from Maya. Check My Orders for the latest order status."
   );
 
-  history.replaceState({}, document.title, window.location.pathname);
+  history.replaceState(
+    {},
+    document.title,
+    window.location.pathname
+  );
 }
 
+/* =========================================
+   CLICK EVENTS
+========================================= */
+
 document.addEventListener("click", async (event) => {
-  const categoryButton = event.target.closest("[data-category]");
+  const target = event.target;
+
+  if (!(target instanceof Element)) return;
+
+  const categoryButton = target.closest("[data-category]");
 
   if (categoryButton) {
     setCategory(categoryButton.dataset.category);
     return;
   }
 
-  const button = event.target.closest("[data-action]");
+  const button = target.closest("[data-action]");
   if (!button) return;
 
-  const action = button.dataset.action;
-
-  switch (action) {
+  switch (button.dataset.action) {
     case "account":
       await checkLoginStatus();
 
@@ -1109,13 +1101,13 @@ document.addEventListener("click", async (event) => {
 
     case "clear-cart":
       clearCart();
-      showToast("Cart cleared.");
       break;
 
     case "checkout":
       showCheckout();
       break;
-         case "close-modal":
+
+    case "close-modal":
       closeModal();
       break;
 
@@ -1128,6 +1120,7 @@ document.addEventListener("click", async (event) => {
 
       if (passwordInput) {
         const showing = passwordInput.type === "text";
+
         passwordInput.type = showing ? "password" : "text";
         button.textContent = showing ? "Show" : "Hide";
       }
@@ -1137,16 +1130,25 @@ document.addEventListener("click", async (event) => {
     case "clear-search":
       clearSearch();
       break;
-        case "retry-products":
+
+    case "retry-products":
       await loadProducts();
       break;
   }
 });
 
+/* =========================================
+   SEARCH AND FORM EVENTS
+========================================= */
+
 if (searchForm) {
   searchForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    currentSearch = searchInput ? searchInput.value.trim() : "";
+
+    currentSearch = searchInput
+      ? searchInput.value.trim()
+      : "";
+
     renderProducts();
   });
 }
@@ -1157,7 +1159,6 @@ if (searchInput) {
     renderProducts();
   });
 }
-
 
 document.addEventListener("submit", async (event) => {
   if (event.target.id === "authForm") {
@@ -1176,39 +1177,31 @@ if (modalBackdrop) {
     }
   });
 }
+
+/* =========================================
+   START THE STORE
+========================================= */
+
 async function initializeStore() {
-  console.log("1. initializeStore started");
+  console.log("JABIÑAR FOOD STORE initializing...");
 
-  try {
-    updateCartCount();
-    console.log("2. Cart count updated");
+  updateCartCount();
 
-    await checkLoginStatus();
-    console.log("3. Login status checked");
+  await checkLoginStatus();
 
-    handleMayaReturn();
-    console.log("4. Maya return handled");
+  handleMayaReturn();
 
-    await loadProducts();
-    console.log("5. Products loading finished");
-  } catch (error) 
-    console.error("Store initialization error:", error);
+  await loadProducts();
 
-    if (productGrid) {
-      productGrid.innerHTML = `
-        <p>Store error: ${escapeHTML(error.message)}</p>
-        <button type="button" data-action="retry-products">
-          Try Again
-        </button>
-      `;
-    }
-  }
+  console.log("JABIÑAR FOOD STORE initialization finished.");
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initializeStore, {
-    once: true
-  });
+  document.addEventListener(
+    "DOMContentLoaded",
+    initializeStore,
+    { once: true }
+  );
 } else {
   initializeStore();
 }

@@ -270,6 +270,7 @@ function renderProducts() {
         </p>
 
         
+
 <button
   type="button"
   class="add-to-cart"
@@ -279,6 +280,7 @@ function renderProducts() {
 >
   Add to Cart
 </button>
+
 
       </div>
     </article>
@@ -407,13 +409,38 @@ function renderCart() {
 
   const content = items.length
     ? `
-      <div class="cart-items">
-        ${items.map((item) => `
-          <div class="cart-item">
-            <div>
-              <strong>${escapeHTML(item.name)}</strong>
-              <p>${money(item.price)} each</p>
-            </div>
+      
+<div class="cart-item">
+  <div class="cart-product-info">
+    <strong>${escapeHTML(item.name)}</strong>
+    <p>${money(item.price)} each</p>
+  </div>
+
+  <strong class="cart-item-price">
+    ${money(Number(item.price) * item.quantity)}
+  </strong>
+
+  <div class="quantity-controls">
+    <button
+      type="button"
+      data-action="quantity"
+      data-id="${escapeHTML(item.id)}"
+      data-change="-1"
+      aria-label="Decrease quantity"
+    >−</button>
+
+    <span>${item.quantity}</span>
+
+    <button
+      type="button"
+      data-action="quantity"
+      data-id="${escapeHTML(item.id)}"
+      data-change="1"
+      aria-label="Increase quantity"
+    >+</button>
+  </div>
+</div>
+
 
             <div class="quantity-controls">
               <button

@@ -1625,4 +1625,36 @@ img {
     margin-top: 4px;
     margin-bottom: 12px;
   }
+
+
+/* CHECKOUT MODAL SIZE FIX */
+
+@media (max-width: 600px) {
+  #modalContent {
+    width: calc(100vw - 32px) !important;
+    max-width: 380px !important;
+    max-height: 82vh !important;
+    margin: auto !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    border-radius: 18px !important;
+  }
+
+  #modalContent .checkout-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+
+  #modalContent .checkout-form,
+  #modalContent .checkout-summary {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
 }

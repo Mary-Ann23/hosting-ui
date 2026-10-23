@@ -531,7 +531,7 @@ async function submitAuth(event) {
   if (message) message.textContent = "Please wait...";
 
   try {
-    const endpoint = mode === "register"
+    const endpoint = mode === "register"ñ
       ? "/api/auth/register"
       : "/api/auth/login";
 
@@ -1059,40 +1059,38 @@ if (modalBackdrop) {
   });
 }
 async function initializeStore() {
+  console.log("1. initializeStore started");
+
   try {
     updateCartCount();
+    console.log("2. Cart count updated");
 
     await checkLoginStatus();
+    console.log("3. Login status checked");
 
     handleMayaReturn();
+    console.log("4. Maya return handled");
 
     await loadProducts();
+    console.log("5. Products loaded");
   } catch (error) {
     console.error("Store initialization error:", error);
 
     if (productGrid) {
       productGrid.innerHTML = `
-        <div class="empty-state">
-          <p>Unable to initialize the store.</p>
-          <p>Please refresh the page and try again.</p>
-          <button
-            type="button"
-            data-action="retry-products"
-          >
-            Try Again
-          </button>
-        </div>
+        <p>Store error: ${escapeHTML(error.message)}</p>
+        <button type="button" data-action="retry-products">
+          Try Again
+        </button>
       `;
     }
   }
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener(
-    "DOMContentLoaded",
-    initializeStore,
-    { once: true }
-  );
+  document.addEventListener("DOMContentLoaded", initializeStore, {
+    once: true
+  });
 } else {
   initializeStore();
 }

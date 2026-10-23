@@ -689,6 +689,38 @@ app.get("/api/orders", requireAuth, async (req, res) => {
 });
 // Serve CSS, JavaScript, images and other public assets.
 // Do not automatically serve index.html.
+
+app.get("/api/db-check", requireAuth, async (req, res) => {
+  try {
+    const db = getPool();
+
+    const result = await db.query(`
+      SELECT
+        current_database() AS database_name,
+        (SELECT COUNT(*) FROM products) AS total_products,
+        (
+          SELECT COUNT(*)
+          FROM products
+          WHERE image_url LIKE '%placehold.co%'
+        ) AS placeholder_images
+    `);
+
+    return res.json({
+      success: true,
+      database: result.rows[0].database_name,
+      total_products: Number(result.rows[0].total_products),
+      placeholder_images: Number(result.rows[0].placeholder_images)
+    });
+  } catch (error) {
+    console.error("Database check error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Database diagnostic failed."
+    });
+  }
+});
+
 app.use(
   express.static(path.join(__dirname, "public"), {
     index: false

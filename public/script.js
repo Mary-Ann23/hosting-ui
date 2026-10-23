@@ -221,6 +221,13 @@ async function loadProducts() {
     products = data.products;
 
     console.log("Products loaded:", products.length);
+console.table(
+  products.map(p => ({
+    id: p.id,
+    name: p.name,
+    image_url: p.image_url
+  }))
+);
 
     renderProducts();
     updateCartCount();

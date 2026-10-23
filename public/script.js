@@ -220,72 +220,76 @@ function getFilteredProducts() {
   });
 }
 
-function renderProducts() {
-  if (!productGrid) return;
 
-  const filtered = getFilteredProducts();
+function renderCart() {
+  const items = getCartItems();
 
-  if (productCount) {
-    productCount.textContent =
-      `${filtered.length} product${filtered.length === 1 ? "" : "s"}`;
-  }
+  const total = items.reduce(
+    (sum, item) => sum + Number(item.price) * item.quantity,
+    0
+  );
 
-  if (!filtered.length) {
-    productGrid.innerHTML = `
+  const content = items.length
+    ? `
+      <div class="cart-items">
+        ${items.map((item) => `
+          <div class="cart-item">
+            <div class="cart-product-info">
+              <strong>${escapeHTML(item.name)}</strong>
+              <p>${money(item.price)} each</p>
+            </div>
+
+            <strong class="cart-item-price">
+              ${money(Number(item.price) * item.quantity)}
+            </strong>
+
+            <div class="quantity-controls">
+              <button
+                type="button"
+                data-action="quantity"
+                data-id="${escapeHTML(item.id)}"
+                data-change="-1"
+                aria-label="Decrease quantity"
+              >−</button>
+
+              <span>${item.quantity}</span>
+
+              <button
+                type="button"
+                data-action="quantity"
+                data-id="${escapeHTML(item.id)}"
+                data-change="1"
+                aria-label="Increase quantity"
+              >+</button>
+            </div>
+          </div>
+        `).join("")}
+      </div>
+
+      <hr>
+
+      <h3>Total: ${money(total)}</h3>
+
+      <button type="button" data-action="checkout">
+        Proceed to Checkout
+      </button>
+
+      <button type="button" data-action="clear-cart">
+        Clear Cart
+      </button>
+    `
+    : `
       <div class="empty-state">
-        <p>No products found in this category.</p>
-        <p>Try another category or search term.</p>
-        <button type="button" data-action="clear-search">
-          Show All Products
+        <p>Your cart is empty.</p>
+        <button type="button" data-action="close-modal">
+          Continue Shopping
         </button>
       </div>
     `;
-    return;
-  }
 
-  productGrid.innerHTML = filtered.map((product) => `
-    <article class="product-card">
-      <img
-        src="${escapeHTML(product.image_url || "https://placehold.co/600x400?text=Product")}"
-        alt="${escapeHTML(product.name)}"
-        loading="lazy"
-        onerror="this.onerror=null;this.src='https://placehold.co/600x400?text=Product';"
-      >
-
-      <div class="product-info">
-        <span class="product-category">
-          ${escapeHTML(product.category || "Other")}
-        </span>
-
-        <h3>${escapeHTML(product.name)}</h3>
-
-        <p>${escapeHTML(product.description || "")}</p>
-
-        <strong>${money(product.price)}</strong>
-
-        <p class="stock">
-          ${Number(product.stock) > 0
-            ? `Stock: ${Number(product.stock)}`
-            : "Out of stock"}
-        </p>
-
-        
-
-<button
-  type="button"
-  class="add-to-cart"
-  data-action="add"
-  data-id="${escapeHTML(product.id)}"
-  ${Number(product.stock) <= 0 ? "disabled" : ""}
->
-  Add to Cart
-</button>
-
-
-      </div>
-    </article>
-  `).join("");
+  openModal("My Cart", content);
 }
+
 
 function setCategory(category) {
   currentCategory = category;

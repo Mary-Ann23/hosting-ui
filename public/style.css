@@ -1746,3 +1746,86 @@ img {
   }
 }
 
+
+/* FIX: JABIÑAR FOOD STORE MOBILE CHECKOUT */
+
+#modalContent .checkout-layout {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  gap: 16px !important;
+  width: 100% !important;
+  align-items: start !important;
+}
+
+#modalContent .checkout-form,
+#modalContent .checkout-summary {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+#modalContent .checkout-section {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+}
+
+#modalContent .checkout-layout input,
+#modalContent .checkout-layout textarea,
+#modalContent .checkout-layout select {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 44px;
+  box-sizing: border-box !important;
+  font-size: 16px !important;
+}
+
+#modalContent .checkout-layout textarea {
+  min-height: 76px;
+}
+
+#modalContent .checkout-summary {
+  position: static !important;
+  height: auto !important;
+  align-self: start !important;
+}
+
+#modalContent .checkout-layout button {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  #modalContent {
+    width: calc(100vw - 24px) !important;
+    max-width: 420px !important;
+    max-height: 88dvh !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
+    padding: 16px !important;
+    margin: 0 auto !important;
+  }
+
+  #modalContent .checkout-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 14px !important;
+  }
+
+  #modalContent .checkout-form,
+  #modalContent .checkout-summary,
+  #modalContent .checkout-section {
+    padding: 12px !important;
+    min-width: 0 !important;
+  }
+
+  #modalContent .checkout-layout h2,
+  #modalContent .checkout-layout h3 {
+    overflow-wrap: anywhere;
+  }
+
+  #modalContent .checkout-layout label {
+    overflow-wrap: anywhere;
+  }
+}

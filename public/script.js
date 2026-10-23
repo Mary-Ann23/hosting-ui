@@ -1214,4 +1214,4 @@ initializeStore,
 initializeStore();
 }
 
-Ito buong code ng script.js
+

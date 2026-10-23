@@ -1178,8 +1178,8 @@ async function initializeStore() {
     console.log("4. Maya return handled");
 
     await loadProducts();
-    console.log("5. Open Product");
-  } catch (error) {
+    console.log("5. Products loading finished");
+  } catch (error) 
     console.error("Store initialization error:", error);
 
     if (productGrid) {

@@ -200,7 +200,7 @@ async function loadProducts() {
     `;
 
     if (count) {
-      count.textContent = "Products unavailable";
+      count.textContent = "Products available";
     }
   }
       }
@@ -1178,7 +1178,7 @@ async function initializeStore() {
     console.log("4. Maya return handled");
 
     await loadProducts();
-    console.log("5. Products loaded");
+    console.log("5. Open Product");
   } catch (error) {
     console.error("Store initialization error:", error);
 

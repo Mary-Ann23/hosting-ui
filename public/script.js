@@ -151,18 +151,45 @@ async function checkLoginStatus() {
 }
 
 async function loadProducts() {
-  if (!productGrid) return;
+  const grid = document.querySelector("#productGrid");
+  const count = document.querySelector("#productCount");
 
-  productGrid.innerHTML = "<p>Loading products...</p>";
+  if (!grid) {
+    console.error("Product grid not found!");
+    return;
+  }
+
+  grid.innerHTML = "<p>Connecting to products...</p>";
 
   try {
-    const data = await apiRequest("/api/products");
+    const response = await fetch("/api/products", {
+      credentials: "same-origin",
+      cache: "no-store"
+    });
 
-    products = Array.isArray(data.products) ? data.products : [];
+    if (!response.ok) {
+      throw new Error(`Server error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.success || !Array.isArray(data.products)) {
+      throw new Error("Invalid products response.");
+    }
+
+    products = data.products;
+
+    console.log("Products loaded:", products.length);
 
     renderProducts();
+
+    if (count) {
+      count.textContent = `${products.length} products`;
+    }
   } catch (error) {
-    productGrid.innerHTML = `
+    console.error("Product loading failed:", error);
+
+    grid.innerHTML = `
       <div class="empty-state">
         <p>Unable to load products.</p>
         <p>${escapeHTML(error.message)}</p>
@@ -172,11 +199,12 @@ async function loadProducts() {
       </div>
     `;
 
-    if (productCount) {
-      productCount.textContent = "Products unavailable";
+    if (count) {
+      count.textContent = "Products unavailable";
     }
   }
-}
+      }
+
 
 function categoryMatches(product) {
   const category = String(product.category || "")

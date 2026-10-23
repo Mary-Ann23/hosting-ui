@@ -249,6 +249,84 @@ function getFilteredProducts() {
 }
 
 
+function renderProducts() {
+  const grid = document.querySelector("#productGrid");
+  const count = document.querySelector("#productCount");
+
+  if (!grid) return;
+
+  const filtered = getFilteredProducts();
+
+  if (count) {
+    count.textContent =
+      `${filtered.length} product${filtered.length === 1 ? "" : "s"}`;
+  }
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state">
+        <h3>No products found</h3>
+        <p>Try another search or category.</p>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = filtered.map((product) => {
+    const name = escapeHTML(product.name || "Product");
+    const category = escapeHTML(product.category || "Groceries");
+    const description = escapeHTML(
+      product.description || "Everyday essentials for your home."
+    );
+    const price = money(product.price);
+    const stock = Number(product.stock || 0);
+    const id = escapeHTML(product.id);
+
+    const imageUrl = String(product.image_url || "").trim();
+    const safeImageUrl =
+      /^https:\/\/[^\s"'<>]+$/i.test(imageUrl)
+        ? escapeHTML(imageUrl)
+        : "https://placehold.co/600x400/ece4ff/5634a5?text=Product+Image";
+
+    return `
+      <article class="product-card">
+        <div class="product-image">
+          <img
+            src="${safeImageUrl}"
+            alt="${name}"
+            loading="lazy"
+            onerror="this.onerror=null;this.src='https://placehold.co/600x400/ece4ff/5634a5?text=Product+Image';"
+          >
+          <span class="product-category">${category}</span>
+        </div>
+
+        <div class="product-info">
+          <h3>${name}</h3>
+          <p class="product-description">${description}</p>
+
+          <div class="product-bottom">
+            <strong class="product-price">${price}</strong>
+          </div>
+
+          <p class="product-stock">
+            ${stock > 0 ? `Stock: ${stock}` : "Out of stock"}
+          </p>
+
+          <button
+            type="button"
+            class="add-to-cart"
+            data-action="add"
+            data-id="${id}"
+            ${stock <= 0 ? "disabled" : ""}
+          >
+            ${stock > 0 ? "🛒 Add to Cart" : "Out of Stock"}
+          </button>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
 function renderCart() {
   const items = getCartItems();
 

@@ -1108,16 +1108,40 @@ if (modalBackdrop) {
   });
 }
 async function initializeStore() {
-  updateCartCount();
-  await checkLoginStatus();
-  handleMayaReturn();
-  await loadProducts();
+  try {
+    updateCartCount();
+
+    await checkLoginStatus();
+
+    handleMayaReturn();
+
+    await loadProducts();
+  } catch (error) {
+    console.error("Store initialization error:", error);
+
+    if (productGrid) {
+      productGrid.innerHTML = `
+        <div class="empty-state">
+          <p>Unable to initialize the store.</p>
+          <p>Please refresh the page and try again.</p>
+          <button
+            type="button"
+            data-action="retry-products"
+          >
+            Try Again
+          </button>
+        </div>
+      `;
+    }
+  }
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", initializeStore, {
-    once: true
-  });
+  document.addEventListener(
+    "DOMContentLoaded",
+    initializeStore,
+    { once: true }
+  );
 } else {
   initializeStore();
 }

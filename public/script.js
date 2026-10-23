@@ -224,11 +224,6 @@ function getFilteredProducts() {
 function renderCart() {
   const items = getCartItems();
 
-  const total = items.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
-    0
-  );
-
   const content = items.length
     ? `
       <div class="cart-items">
@@ -265,55 +260,11 @@ function renderCart() {
           </div>
         `).join("")}
       </div>
-
-      <hr>
-
-      <h3>Total: ${money(total)}</h3>
-
-      <button type="button" data-action="checkout">
-        Proceed to Checkout
-      </button>
-
-      <button type="button" data-action="clear-cart">
-        Clear Cart
-      </button>
     `
-    : `
-      <div class="empty-state">
-        <p>Your cart is empty.</p>
-        <button type="button" data-action="close-modal">
-          Continue Shopping
-        </button>
-      </div>
-    `;
+    : `<p>Your cart is empty.</p>`;
 
   openModal("My Cart", content);
 }
-
-
-function setCategory(category) {
-  currentCategory = category;
-
-  document.querySelectorAll("[data-category]").forEach((button) => {
-    const active = button.dataset.category === category;
-
-    button.classList.toggle("active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
-
-  renderProducts();
-}
-
-function clearSearch() {
-  currentSearch = "";
-
-  if (searchInput) {
-    searchInput.value = "";
-  }
-
-  setCategory("All");
-}
-
 function addToCart(productId) {
   const product = products.find(
     (item) => String(item.id) === String(productId)

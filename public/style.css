@@ -1515,10 +1515,10 @@ img {
 #modalContent .checkout-layout textarea,
 #modalContent .checkout-layout select {
   display: block !important;
-  width: 100% !important;
+  width: 800% !important;
   max-width: 100% !important;
   min-width: 0 !important;
-  min-height: 44px;
+  min-height: 50px;
   box-sizing: border-box !important;
   font-size: 16px !important;
 }

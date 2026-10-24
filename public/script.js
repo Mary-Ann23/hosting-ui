@@ -572,36 +572,30 @@ function openCart() {
 }
 
       
-
-// ORDER HISTORY
 async function showOrders() {
   const section = $("#ordersSection");
+  const list = $("#ordersList");
+
+  if (!section || !list) {
+    showToast("My Orders section not found.");
+    return;
+  }
+
+  section.classList.remove("hidden");
+  section.hidden = false;
+  list.innerHTML = "<p>Loading your orders...</p>";
+
+  section.scrollIntoView({ behavior: "smooth" });
 
   try {
     const data = await apiRequest("/api/orders");
-
-    if (section) {
-      section.hidden = false;
-      section.innerHTML = "<h2>My Orders</h2>";
-    }
-
     const orders = Array.isArray(data.orders) ? data.orders : [];
 
-    if (!orders.length) {
-      if (section) {
-        section.innerHTML += "<p>You have no orders yet.</p>";
-        section.scrollIntoView({ behavior: "smooth" });
-      } else {
-        showToast("You have no orders yet.");
-      }
-      return;
-    }
+    list.replaceChildren();
 
-    const list = section || document.createElement("section");
-    if (!section) {
-      list.id = "ordersSection";
-      document.querySelector("main")?.appendChild(list);
-      list.innerHTML = "<h2>My Orders</h2>";
+    if (!orders.length) {
+      list.innerHTML = "<p>You have no orders yet.</p>";
+      return;
     }
 
     orders.forEach(order => {
@@ -621,40 +615,18 @@ async function showOrders() {
       card.append(title, details);
       list.appendChild(card);
     });
-
-    list.scrollIntoView({ behavior: "smooth" });
   } catch (error) {
-    if (error.message.toLowerCase().includes("unauthorized") ||
-        error.message.toLowerCase().includes("login")) {
-      window.location.href = "/login.html";
-      return;
-    }
+    list.replaceChildren();
 
-    showToast(error.message || "Unable to load orders.");
+    const message = document.createElement("p");
+    message.textContent = error.message || "Unable to load orders.";
+    list.appendChild(message);
+
+    if (/unauthorized|login/i.test(error.message)) {
+      window.location.href = "/login.html";
+    }
   }
 }
-
-// BUTTON ACTIONS
-document.addEventListener("click", event => {
-  const button = event.target.closest("[data-action]");
-  if (!button) return;
-
-  const action = button.dataset.action;
-
-  if (action === "add") {
-    addToCart(button.dataset.id);
-  } else if (action === "cart") {
-    openCart();
-  } else if (action === "account") {
-    if (currentUser) {
-      logout();
-    } else {
-      window.location.href = "/login.html";
-    }
-  } else if (action === "my-orders") {
-    showOrders();
-  }
-});
 
 // CART BUTTON
 const cartToggle = $("#cartToggle");

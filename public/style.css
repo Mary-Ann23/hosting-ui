@@ -1479,180 +1479,92 @@ padding: 17px 11px;
 .checkout-summary {
 padding: 11px;
 }
+/* CENTERED COMPACT CHECKOUT - JABIÑAR FOOD STORE */
+
+#modalBackdrop {
+  display: grid;
+  place-items: center;
+  padding: 16px;
 }
 
-/* JABIÑAR FOOD STORE - CHECKOUT LAYOUT FIX */
+#modalContent {
+  width: min(440px, 100%);
+  max-width: 440px;
+  max-height: 88vh;
+  margin: auto;
+  padding: 22px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  border: 1px solid #eee5f2;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(50, 20, 75, .25);
+}
 
 #modalContent .checkout-layout {
-display: flex !important;
-flex-direction: column !important;
-align-items: stretch !important;
-gap: 16px !important;
-width: 100% !important;
-min-width: 0 !important;
-box-sizing: border-box !important;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
 }
 
 #modalContent .checkout-form,
 #modalContent .checkout-summary {
-display: block !important;
-width: 100% !important;
-max-width: 100% !important;
-min-width: 0 !important;
-margin: 0 !important;
-box-sizing: border-box !important;
+  position: static;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  box-sizing: border-box;
 }
 
-#modalContent .checkout-section {
-width: 100% !important;
-min-width: 0 !important;
-box-sizing: border-box !important;
+#modalContent .checkout-section,
+#modalContent .checkout-summary {
+  padding: 14px;
+  border: 1px solid #eee5f2;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 3px 12px rgba(71, 33, 95, .06);
 }
 
-#modalContent .checkout-layout input,
+#modalContent .checkout-layout input:not([type="radio"]),
 #modalContent .checkout-layout textarea,
 #modalContent .checkout-layout select {
-display: block !important;
-width: 100% !important;
-max-width: 100% !important;
-min-width: 0 !important;
-min-height: 50px;
-box-sizing: border-box !important;
-font-size: 16px !important;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font-size: 14px;
 }
 
-#modalContent .checkout-layout textarea {
-min-height: 76px;
-}
-
-#modalContent .checkout-summary {
-position: static !important;
-align-self: stretch !important;
-height: auto !important;
-}
-
-#modalContent .checkout-layout button {
-max-width: 100%;
-box-sizing: border-box !important;
+#modalContent .checkout-place-order {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 12px;
 }
 
 @media (max-width: 600px) {
-#modalContent {
-width: calc(100% - 20px) !important;
-max-width: 250px !important;
-max-height: 85vh !important;
-overflow-x: hidden !important;
-overflow-y: auto !important;
-box-sizing: border-box !important;
-margin: 0 auto !important;
-padding: 14px !important;
+  #modalBackdrop {
+    padding: 12px;
+  }
+
+  #modalContent {
+    width: 100%;
+    max-width: 400px;
+    max-height: 85vh;
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  #modalContent .checkout-layout {
+    gap: 12px;
+  }
+
+  #modalContent .checkout-section,
+  #modalContent .checkout-summary {
+    padding: 12px;
+  }
 }
-
-#modalContent .checkout-layout {
-display: flex !important;
-flex-direction: column !important;
-gap: 12px !important;
-}
-
-#modalContent .checkout-form,
-#modalContent .checkout-summary,
-#modalContent .checkout-section {
-padding: 12px !important;
-}
-
-}
-
-/* FINAL CHECKOUT POLISH - JABIÑAR FOOD STORE */
-
-#modalContent .checkout-layout {
-gap: 18px !important;
-}
-
-#modalContent .checkout-form,
-#modalContent .checkout-summary {
-border-radius: 16px !important;
-background: #ffffff;
-box-shadow: 0 3px 14px rgba(65, 35, 100, 0.07);
-}
-
-#modalContent .checkout-section {
-margin-bottom: 12px !important;
-border-radius: 12px !important;
-}
-
-#modalContent .checkout-layout input,
-#modalContent .checkout-layout textarea,
-#modalContent .checkout-layout select {
-border: 1px solid #ded4ee !important;
-border-radius: 10px !important;
-padding: 11px 12px !important;
-background: #fff !important;
-}
-
-#modalContent .checkout-layout input:focus,
-#modalContent .checkout-layout textarea:focus,
-#modalContent .checkout-layout select:focus {
-outline: 2px solid #a78bfa !important;
-outline-offset: 1px;
-border-color: #7c3aed !important;
-}
-
-#modalContent .checkout-summary {
-overflow-wrap: anywhere;
-}
-
-#modalContent .checkout-layout button {
-min-height: 44px;
-border-radius: 12px !important;
-}
-
-@media (max-width: 600px) {
-#modalContent {
-padding: 12px !important;
-border-radius: 18px !important;
-}
-
-#modalContent .checkout-form,
-#modalContent .checkout-summary {
-padding: 14px !important;
-}
-
-#modalContent .checkout-layout h2,
-#modalContent .checkout-layout h3 {
-margin-top: 4px;
-margin-bottom: 12px;
-}
-
-/* CHECKOUT MODAL SIZE FIX */
-
-@media (max-width: 600px) {
-#modalContent {
-width: calc(100vw - 32px) !important;
-max-width: 380px !important;
-max-height: 82vh !important;
-margin: auto !important;
-padding: 16px !important;
-box-sizing: border-box !important;
-overflow-x: hidden !important;
-overflow-y: auto !important;
-border-radius: 18px !important;
-}
-
-#modalContent .checkout-layout {
-display: flex !important;
-flex-direction: column !important;
-width: 100% !important;
-gap: 12px !important;
-}
-
-#modalContent .checkout-form,
-#modalContent .checkout-summary {
-width: 100% !important;
-max-width: 100% !important;
-min-width: 0 !important;
-box-sizing: border-box !important;
-margin: 0 !important;
-}
-}
-
-Ito nmn yung style.css
+  

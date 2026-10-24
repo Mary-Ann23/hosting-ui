@@ -1875,3 +1875,34 @@ nav button {
   }
 }
   
+/* Keep header navigation in one horizontal row */
+.header-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+.header-actions button,
+.header-actions a {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+/* Mobile header layout */
+@media (max-width: 768px) {
+  .header {
+    align-items: center;
+  }
+
+  .header-actions {
+    overflow-x: auto;
+    max-width: 100%;
+    padding-bottom: 6px;
+  }
+}
+
+  

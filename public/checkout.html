@@ -1,399 +1,296 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Checkout | JABIÑAR FOOD STORE</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f6f3ff;
-      color: #30264a;
-    }
-
-    header {
-      background: #6c43c5;
-      color: white;
-      padding: 20px 16px;
-    }
-
-    .header-content {
-      max-width: 760px;
-      margin: auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 20px;
-    }
-
-    header p {
-      margin: 5px 0 0;
-      font-size: 13px;
-    }
-
-    .back-link {
-      color: white;
-      text-decoration: none;
-      font-size: 14px;
-      white-space: nowrap;
-    }
-
-    main {
-      max-width: 650px;
-      margin: 25px auto;
-      padding: 0 14px 30px;
-    }
-
-    .card {
-      background: white;
-      padding: 22px;
-      border-radius: 16px;
-      box-shadow: 0 5px 20px #39206412;
-      margin-bottom: 18px;
-    }
-
-    h2 {
-      margin: 0 0 8px;
-      font-size: 22px;
-    }
-
-    .subtitle {
-      color: #766b89;
-      font-size: 14px;
-      line-height: 1.5;
-      margin-bottom: 22px;
-    }
-
-    .field {
-      margin-bottom: 17px;
-    }
-
-    label {
-      display: block;
-      font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
-
-    input,
-    textarea {
-      width: 100%;
-      padding: 13px;
-      border: 1px solid #ded5ef;
-      border-radius: 9px;
-      font-size: 15px;
-      font-family: inherit;
-      background: #fff;
-      color: #30264a;
-    }
-
-    input:focus,
-    textarea:focus {
-      outline: 2px solid #bba4f3;
-      border-color: #8055d5;
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 95px;
-    }
-
-    .payment-option {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border: 1px solid #ded5ef;
-      border-radius: 10px;
-      padding: 14px;
-      margin-bottom: 10px;
-      cursor: pointer;
-    }
-
-    .payment-option input {
-      width: auto;
-      accent-color: #6c43c5;
-    }
-
-    .payment-option span {
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .notice {
-      padding: 12px;
-      background: #f1ebff;
-      color: #5d3ba3;
-      border-radius: 9px;
-      font-size: 13px;
-      line-height: 1.5;
-      margin-top: 12px;
-    }
-
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: 12px;
-      font-size: 14px;
-    }
-
-    .total {
-      border-top: 1px solid #e9e2f4;
-      padding-top: 15px;
-      margin-top: 15px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    button {
-      width: 100%;
-      padding: 15px;
-      background: #6c43c5;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #5732a8;
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .message {
-      display: none;
-      padding: 12px;
-      border-radius: 9px;
-      margin-bottom: 15px;
-      font-size: 14px;
-      line-height: 1.5;
-    }
-
-    .message.error {
-      display: block;
-      color: #a11b35;
-      background: #fff0f2;
-    }
-
-    .message.success {
-      display: block;
-      color: #176b3a;
-      background: #eaf8ef;
-    }
-
-    footer {
-      text-align: center;
-      padding: 18px;
-      color: #766b89;
-      font-size: 12px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkout | JABIÑAR FOOD STORE</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f6f3ff;color:#30264a}
+header{background:#6c43c5;color:white;padding:18px}
+.head,main{max-width:650px;margin:auto}
+.head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+h1{font-size:19px;margin:0}
+header p{font-size:12px;margin:5px 0 0}
+a{color:white;text-decoration:none;font-size:13px}
+main{padding:18px 12px}
+.card{background:white;padding:19px;border-radius:14px;margin-bottom:15px;box-shadow:0 4px 18px #39206412}
+h2{font-size:20px;margin:0 0 8px}
+.sub{font-size:13px;color:#766b89;line-height:1.5}
+.field{margin:15px 0}
+label{display:block;font-size:14px;font-weight:bold;margin-bottom:7px}
+input:not([type=radio]),textarea{width:100%;padding:12px;border:1px solid #ded5ef;border-radius:8px;font:15px Arial}
+textarea{min-height:75px;resize:vertical}
+.pay{display:flex;align-items:center;gap:10px;border:1px solid #ded5ef;padding:13px;border-radius:9px;margin:9px 0}
+.pay input{accent-color:#6c43c5}
+.row{display:flex;justify-content:space-between;gap:10px;margin:12px 0;font-size:14px}
+.total{border-top:1px solid #e9e2f4;padding-top:14px;font-size:18px;font-weight:bold}
+.notice{background:#f1ebff;color:#5d3ba3;padding:11px;border-radius:8px;font-size:12px;line-height:1.5}
+button{width:100%;padding:14px;border:0;border-radius:9px;background:#6c43c5;color:white;font-size:16px;font-weight:bold;margin-top:15px}
+button:disabled{opacity:.6}
+#message{display:none;padding:12px;border-radius:8px;font-size:13px;line-height:1.5;margin-bottom:12px}
+footer{text-align:center;padding:16px;color:#766b89;font-size:12px}
+</style>
 </head>
-
 <body>
-  <header>
-    <div class="header-content">
-      <div>
-        <h1>JABIÑAR FOOD STORE</h1>
-        <p>Good food, happy mood.</p>
-      </div>
-      <a class="back-link" href="/">← Back to Menu</a>
-    </div>
-  </header>
+<header><div class="head">
+<div><h1>JABIÑAR FOOD STORE</h1><p>Good food, happy mood.</p></div>
+<a href="/">← Back to Menu</a>
+</div></header>
 
-  <main>
-    <form id="checkoutForm">
-      <section class="card">
-        <h2>Delivery Information</h2>
-        <p class="subtitle">
-          Please enter your details so we can deliver your order.
-        </p>
+<main>
+<form id="checkoutForm">
+<section class="card">
+<h2>Delivery Information</h2>
+<p class="sub">Please enter your delivery details.</p>
+<div id="message" role="status"></div>
 
-        <div id="message" class="message" role="status"></div>
+<div class="field">
+<label for="fullName">Full Name *</label>
+<input id="fullName" name="full_name" maxlength="100" autocomplete="name" required>
+</div>
 
-        <div class="field">
-          <label for="fullName">Full Name *</label>
-          <input
-            id="fullName"
-            name="full_name"
-            type="text"
-            placeholder="Enter your full name"
-            autocomplete="name"
-            maxlength="100"
-            required
-          >
-        </div>
+<div class="field">
+<label for="phone">Mobile Number *</label>
+<input id="phone" name="contact_number" type="tel" maxlength="20" placeholder="09XXXXXXXXX" required>
+</div>
 
-        <div class="field">
-          <label for="phone">Mobile Number *</label>
-          <input
-            id="phone"
-            name="phone"
-            type="tel"
-            placeholder="09XXXXXXXXX"
-            autocomplete="tel"
-            maxlength="20"
-            required
-          >
-        </div>
+<div class="field">
+<label for="address">Complete Address *</label>
+<textarea id="address" name="address" maxlength="500" placeholder="House number, street, barangay, city" required></textarea>
+</div>
 
-        <div class="field">
-          <label for="address">Complete Delivery Address *</label>
-          <textarea
-            id="address"
-            name="address"
-            placeholder="House number, street, barangay, city, province"
-            autocomplete="street-address"
-            maxlength="500"
-            required
-          ></textarea>
-        </div>
-      </section>
+<div class="field">
+<label for="instructions">Delivery Instructions (optional)</label>
+<textarea id="instructions" name="instructions" maxlength="500"></textarea>
+</div>
+</section>
 
-      <section class="card">
-        <h2>Payment Method</h2>
-        <p class="subtitle">Choose how you want to pay.</p>
+<section class="card">
+<h2>Payment Method</h2>
+<p class="sub">Choose your payment method.</p>
+<label class="pay">
+<input type="radio" name="payment_method" value="COD" checked>
+Cash on Delivery (COD)
+</label>
+<label class="pay">
+<input type="radio" name="payment_method" value="MAYA">
+Maya
+</label>
+<div id="mayaNotice" class="notice" hidden>
+Maya requires a working secure payment integration.
+</div>
+</section>
+<section class="card">
+<h2>Order Summary</h2>
+<div id="summary"></div>
+<div class="row"><span>Total items</span><span id="itemCount">0</span></div>
+<div class="row total"><span>Total</span><span id="orderTotal">₱0.00</span></div>
+<p class="notice">The server must verify product prices and availability.</p>
+<button id="placeOrderButton" type="submit">Place Order</button>
+</section>
+</form>
+</main>
+<footer>© JABIÑAR FOOD STORE</footer>
 
-        <label class="payment-option">
-          <input
-            type="radio"
-            name="payment_method"
-            value="COD"
-            checked
-            required
-          >
-          <span>Cash on Delivery (COD)</span>
-        </label>
+<script>
+"use strict";
 
-        <label class="payment-option">
-          <input
-            type="radio"
-            name="payment_method"
-            value="MAYA"
-            required
-          >
-          <span>Maya</span>
-        </label>
+const KEY = "jfs_cart";
+const form = document.getElementById("checkoutForm");
+const btn = document.getElementById("placeOrderButton");
+const msg = document.getElementById("message");
+let busy = false;
 
-        <div id="mayaNotice" class="notice" hidden>
-          Maya checkout will only proceed once the store's secure
-          Maya payment integration is configured.
-        </div>
-      </section>
+function showMessage(text, success = false) {
+  msg.textContent = text;
+  msg.style.display = "block";
+  msg.style.background = success ? "#eaf8ef" : "#fff0f2";
+  msg.style.color = success ? "#176b3a" : "#a11b35";
+}
 
-      <section class="card">
-        <h2>Order Summary</h2>
+function getCart() {
+  try {
+    const data = JSON.parse(localStorage.getItem(KEY) || "[]");
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
 
-        <div class="summary-row">
-          <span>Items</span>
-          <span id="itemCount">Not loaded</span>
-        </div>
+function peso(n) {
+  return "₱" + Number(n).toLocaleString("en-PH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
 
-        <div class="summary-row total">
-          <span>Total</span>
-          <span id="orderTotal">Not loaded</span>
-        </div>
+function renderSummary() {
+  const box = document.getElementById("summary");
+  box.replaceChildren();
 
-        <div class="notice">
-          Your order total must be verified by the store before
-          the order is saved.
-        </div>
+  let count = 0;
+  let total = 0;
 
-        <div style="margin-top: 20px">
-          <button id="placeOrderButton" type="submit">
-            Place Order
-          </button>
-        </div>
-      </section>
-    </form>
-  </main>
+  getCart().forEach(item => {
+    const quantity = Number(item.quantity ?? item.qty ?? 1);
+    const price = Number(item.price ?? item.unit_price ?? 0);
+    if (!Number.isSafeInteger(quantity) || quantity < 1) return;
 
-  <footer>
-    © JABIÑAR FOOD STORE
-  </footer>
+    count += quantity;
+    total += Math.max(0, price) * quantity;
 
-  <script>
-    const form = document.getElementById("checkoutForm");
-    const message = document.getElementById("message");
-    const button = document.getElementById("placeOrderButton");
-    const mayaNotice = document.getElementById("mayaNotice");
+    const row = document.createElement("div");
+    row.className = "row";
 
-    document.querySelectorAll('input[name="payment_method"]')
-      .forEach((radio) => {
-        radio.addEventListener("change", () => {
-          mayaNotice.hidden = radio.value !== "MAYA" || !radio.checked;
-        });
-      });
+    const name = document.createElement("span");
+    name.textContent = (item.name || item.product_name || "Product") +
+      " × " + quantity;
 
-    // Check that the customer has an active login session.
-    async function checkLogin() {
-      try {
-        const response = await fetch("/api/auth/me", {
-          credentials: "same-origin"
-        });
+    const amount = document.createElement("span");
+    amount.textContent = peso(Math.max(0, price) * quantity);
 
-        if (!response.ok) {
-          window.location.replace("/login.html");
-          return false;
-        }
+    row.append(name, amount);
+    box.append(row);
+  });
 
-        return true;
-      } catch (error) {
-        showMessage(
-          "Unable to verify your login. Please check your connection and try again.",
-          "error"
-        );
-        button.disabled = true;
-        return false;
-      }
-    }
+  document.getElementById("itemCount").textContent = count;
+  document.getElementById("orderTotal").textContent = peso(total);
 
-    function showMessage(text, type) {
-      message.textContent = text;
-      message.className = "message " + type;
-    }
+  if (!count) {
+    showMessage("Your cart is empty. Return to the menu first.");
+    btn.disabled = true;
+  }
+}
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-
-      const loggedIn = await checkLogin();
-      if (!loggedIn) return;
-
-      const paymentMethod = form.elements.payment_method.value;
-
-      if (paymentMethod === "MAYA") {
-        showMessage(
-          "Maya payment is not ready yet. Please choose COD until the secure Maya payment integration is connected.",
-          "error"
-        );
-        return;
-      }
-
-      showMessage(
-        "The delivery form is ready, but order submission is not connected yet. Please wait while we connect it to the store database.",
-        "error"
-      );
+async function checkLogin() {
+  try {
+    const response = await fetch("/api/auth/me", {
+      credentials: "same-origin",
+      cache: "no-store"
     });
 
-    checkLogin();
-  </script>
+    if (response.status === 401) {
+      location.replace("/login.html");
+      return false;
+    }
+
+    if (!response.ok) {
+      showMessage("Unable to verify login. Please try again.");
+      return false;
+    }
+
+    return true;
+  } catch {
+    showMessage("Connection error. Please try again.");
+    return false;
+  }
+}
+
+document.querySelectorAll('[name="payment_method"]').forEach(radio => {
+  radio.addEventListener("change", () => {
+    document.getElementById("mayaNotice").hidden =
+      form.elements.payment_method.value !== "MAYA";
+  });
+});
+
+form.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (busy) return;
+  if (!await checkLogin()) return;
+
+  const cart = getCart();
+  if (!cart.length) {
+    showMessage("Your cart is empty.");
+    return;
+  }
+
+  const items = cart.map(item => ({
+    product_id: Number(item.product_id ?? item.productId ?? item.id),
+    quantity: Number(item.quantity ?? item.qty ?? 1)
+  }));
+
+  if (items.some(item =>
+    !Number.isSafeInteger(item.product_id) || item.product_id < 1 ||
+    !Number.isSafeInteger(item.quantity) || item.quantity < 1
+  )) {
+    showMessage("Invalid cart items. Return to the menu and try again.");
+    return;
+  }
+
+  const payment = form.elements.payment_method.value;
+  const payload = {
+    full_name: form.elements.full_name.value.trim(),
+    contact_number: form.elements.contact_number.value.trim(),
+    address: form.elements.address.value.trim(),
+    instructions: form.elements.instructions.value.trim(),
+    payment_method: payment,
+    items
+  };
+
+  if (!payload.full_name || !payload.contact_number || !payload.address) {
+    showMessage("Please complete all required delivery details.");
+    return;
+  }
+
+  busy = true;
+  btn.disabled = true;
+  btn.textContent = "Processing...";
+
+  try {
+    const response = await fetch(
+      payment === "MAYA" ? "/api/checkout/maya" : "/api/orders",
+      {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || data.success === false) {
+      showMessage(data.message || "Order not confirmed. Please try again.");
+      return;
+    }
+
+    if (payment === "MAYA") {
+      const url = data.checkoutUrl || data.checkout_url ||
+        data.redirectUrl || data.redirect_url;
+
+      if (url) {
+        const safeUrl = new URL(url);
+        if (safeUrl.protocol !== "https:") {
+          showMessage("The payment link is not secure.");
+          return;
+        }
+        location.assign(safeUrl.href);
+      } else {
+        showMessage(data.message ||
+          "Maya checkout is not ready. Payment is not confirmed.");
+      }
+      return;
+    }
+
+    localStorage.removeItem(KEY);
+    showMessage(data.message || "Order submitted successfully.", true);
+    btn.textContent = "Order Submitted";
+    setTimeout(() => location.replace("/"), 1500);
+
+  } catch {
+    showMessage("Connection error. Check My Orders before trying again.");
+  } finally {
+    busy = false;
+    if (btn.textContent === "Processing...") {
+      btn.disabled = false;
+      btn.textContent = "Place Order";
+    }
+  }
+});
+
+renderSummary();
+checkLogin();
+</script>
 </body>
 </html>

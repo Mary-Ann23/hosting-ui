@@ -71,16 +71,11 @@
       backdrop-filter: blur(10px);
     }
 
-    .header-inner {
-      max-width: 1200px;
-      margin: auto;
-      padding: 15px 22px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-    }
-
+    ..header-inner {
+  padding: 12px 10px;
+  align-items: center;
+  gap: 8px;
+}
     .brand {
       display: flex;
       align-items: center;
@@ -113,13 +108,45 @@
       font-size: 11px;
     }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 9px;
-      flex-wrap: wrap;
-    }
+
+.header-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 0;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.header-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.header-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.brand {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.brand-name {
+  white-space: nowrap;
+}
+
 
     .header-button {
       padding: 10px 13px;

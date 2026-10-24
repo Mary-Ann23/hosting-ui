@@ -1,56 +1,17 @@
-
 "use strict";
 
-/* =========================================
-   JABIÑAR FOOD STORE
-   Main frontend script
-========================================= */
-
 const CART_KEY = "jfs_cart";
-
 const $ = (selector) => document.querySelector(selector);
 
-const productGrid = $("#productGrid");
-const productCount = $("#productCount");
-const searchInput = $("#searchInput");
-const searchForm = $("#searchForm");
-const modalBackdrop = $("#modalBackdrop");
-const modalContent = $("#modalContent");
-const modalTitle = $("#modalTitle");
-const toastElement = $("#toast");
-
-let products = [];
-let currentCategory = "All";
-let currentSearch = "";
 let currentUser = null;
-let cart = loadCart();
-let toastTimer = null;
+let products = [];
+let cart = [];
 
-/* =========================================
-   HELPERS
-========================================= */
-
-function escapeHTML(value) {
-  const replacements = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;"
-  };
-
-  return String(value ?? "").replace(
-    /[&<>"']/g,
-    (character) => replacements[character]
-  );
-}
-
-function money(value) {
-  return "₱" + Number(value || 0).toLocaleString("en-PH", {
+const money = (value) =>
+  "₱" + Number(value || 0).toLocaleString("en-PH", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
-}
 
 async function apiRequest(url, options = {}) {
   const response = await fetch(url, {
@@ -59,110 +20,57 @@ async function apiRequest(url, options = {}) {
     ...options,
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
-      ...(options.headers || {})
+      ...options.headers
     }
   });
 
-  let data;
+  const data = await response.json().catch(() => ({}));
 
-  try {
-    data = await response.json();
-  } catch {
-    throw new Error("The server returned an invalid response.");
-  }
-
-  if (!response.ok || data.success === false) {
-    throw new Error(
-      data.message || `Request failed (${response.status}).`
-    );
+  if (!response.ok) {
+    throw new Error(data.message || "Request failed. Please try again.");
   }
 
   return data;
 }
 
 function showToast(message) {
-  if (!toastElement) {
-    alert(message);
-    return;
+  let toast = $("#toast");
+
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "toast";
+    toast.className = "toast";
+    document.body.appendChild(toast);
   }
 
-  toastElement.textContent = message;
-  toastElement.classList.add("show");
-
-  clearTimeout(toastTimer);
-
-  toastTimer = setTimeout(() => {
-    toastElement.classList.remove("show");
-  }, 3000);
+  toast.textContent = message;
+  toast.hidden = false;
 }
-
-function openModal(title, content) {
-  if (!modalBackdrop || !modalContent || !modalTitle) {
-    alert("The modal elements are missing from index.html.");
-    return;
-  }
-
-  modalTitle.textContent = title;
-  modalContent.innerHTML = content;
-  modalBackdrop.classList.remove("hidden");
-}
-
-function closeModal() {
-  if (modalBackdrop) {
-    modalBackdrop.classList.add("hidden");
-  }
-}
-
-/* =========================================
-   CART STORAGE AND ACCOUNT
-========================================= */
 
 function loadCart() {
   try {
-    const saved = JSON.parse(
-      localStorage.getItem(CART_KEY) || "[]"
-    );
-
-    return Array.isArray(saved)
-      ? saved.filter((item) =>
-          item &&
-          item.productId != null &&
-          Number(item.quantity) > 0
-        )
-      : [];
+    const saved = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+    cart = Array.isArray(saved) ? saved : [];
   } catch {
-    return [];
-  }
-}
-
-function saveCart() {
-  try {
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-  } catch (error) {
-    console.error("Unable to save cart:", error);
-    showToast("Unable to save your cart on this device.");
+    cart = [];
   }
 
   updateCartCount();
 }
 
-function updateCartCount() {
-  const countElement = $("#cartCount");
-
-  if (countElement) {
-    countElement.textContent = cart.reduce(
-      (total, item) => total + Number(item.quantity || 0),
-      0
-    );
-  }
+function saveCart() {
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  updateCartCount();
 }
 
-function updateAccountButton() {
-  const button = $("#accountButton");
+function updateCartCount() {
+  const count = cart.reduce(
+    (total, item) => total + Math.max(0, Number(item.quantity) || 0),
+    0
+  );
 
-  if (button) {
-    button.textContent = currentUser ? "♙ Log out" : "♙ Log in";
-  }
+  const element = $("#cartCount");
+  if (element) element.textContent = count;
 }
 
 async function checkLoginStatus() {
@@ -177,256 +85,155 @@ async function checkLoginStatus() {
   return currentUser;
 }
 
+function updateAccountButton() {
+  const button = $("#accountButton");
+  if (!button) return;
+
+  button.textContent = currentUser ? "♙ Log out" : "♙ Log in";
+}
+
 async function logout() {
   try {
-    await apiRequest("/api/auth/logout", {
-      method: "POST"
-    });
-
+    await apiRequest("/api/auth/logout", { method: "POST" });
     currentUser = null;
     updateAccountButton();
-    closeModal();
-
-    cart = [];
-    saveCart();
-
     window.location.replace("/login.html");
   } catch (error) {
     showToast(error.message);
   }
 }
 
-/* =========================================
-   PRODUCTS
-========================================= */
-
+function escapeHTML(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
+}
+// PRODUCTS
 async function loadProducts() {
   const grid = $("#productGrid");
-  const count = $("#productCount");
+  if (!grid) return;
 
-  if (!grid) {
-    console.error("Product grid #productGrid was not found.");
-    return;
-  }
-
-  grid.innerHTML = "<p>Loading delicious finds...</p>";
+  grid.innerHTML = "<p>Loading products...</p>";
 
   try {
     const data = await apiRequest("/api/products");
-
-    if (!Array.isArray(data.products)) {
-      throw new Error("The products response is invalid.");
-    }
-
-    products = data.products;
-
-    console.log("Products loaded:", products.length);
-console.table(
-  products.map(p => ({
-    id: p.id,
-    name: p.name,
-    image_url: p.image_url
-  }))
-);
-
-    renderProducts();
-    updateCartCount();
-
-    if (count) {
-      count.textContent = `${products.length} products`;
-    }
+    products = Array.isArray(data.products) ? data.products : [];
+    renderProducts(products);
   } catch (error) {
-    console.error("Product loading failed:", error);
-
-    grid.innerHTML = `
-      <div class="empty-state">
-        <h3>Unable to load products</h3>
-        <p>${escapeHTML(error.message)}</p>
-        <button type="button" data-action="retry-products">
-          Try Again
-        </button>
-      </div>
-    `;
-
-    if (count) {
-      count.textContent = "Products unavailable";
-    }
+    grid.innerHTML = "";
+    const p = document.createElement("p");
+    p.textContent = error.message || "Unable to load products.";
+    grid.appendChild(p);
   }
 }
 
-function categoryMatches(product) {
-  const category = String(product.category || "")
-    .trim()
-    .toLowerCase();
-
-  if (currentCategory === "All") {
-    return true;
-  }
-
-  const categoryAliases = {
-    "Fresh Produce": [
-      "fresh produce",
-      "produce",
-      "fruits",
-      "vegetables"
-    ],
-    "Groceries": ["groceries", "grocery"],
-    "Beverages": ["beverages", "drinks", "drink"],
-    "Snacks": ["snacks", "snack"],
-    "Household Needs": ["household needs", "household"]
-  };
-
-  const accepted = categoryAliases[currentCategory] || [
-    currentCategory.toLowerCase()
-  ];
-
-  return accepted.includes(category);
-}
-
-function getFilteredProducts() {
-  return products.filter((product) => {
-    const matchesCategory = categoryMatches(product);
-
-    const searchText = [
-      product.name,
-      product.description,
-      product.category
-    ].join(" ").toLowerCase();
-
-    const matchesSearch = searchText.includes(
-      currentSearch.toLowerCase()
-    );
-
-    return matchesCategory && matchesSearch;
-  });
-}
-
-function renderProducts() {
+function renderProducts(list) {
   const grid = $("#productGrid");
-  const count = $("#productCount");
-
   if (!grid) return;
 
-  const filtered = getFilteredProducts();
+  grid.replaceChildren();
 
-  if (count) {
-    count.textContent =
-      `${filtered.length} product${filtered.length === 1 ? "" : "s"}`;
-  }
-
-  if (filtered.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state">
-        <h3>No products found</h3>
-        <p>Try another search or category.</p>
-        <button type="button" data-action="clear-search">
-          Clear Search
-        </button>
-      </div>
-    `;
+  if (!list.length) {
+    grid.innerHTML = "<p>No products found in this category.</p>";
     return;
   }
 
-  grid.innerHTML = filtered.map((product) => {
-    const name = escapeHTML(product.name || "Product");
-    const category = escapeHTML(product.category || "Groceries");
-    const description = escapeHTML(
-      product.description || "Everyday essentials for your home."
-    );
-    const price = money(product.price);
-    const stock = Math.max(0, Number(product.stock || 0));
-    const id = escapeHTML(String(product.id));
+  list.forEach(product => {
+    const card = document.createElement("article");
+    card.className = "product-card";
 
-    const imageUrl = String(product.image_url || "").trim();
+    const image = document.createElement("img");
+    image.className = "product-image";
+    image.src = product.image_url || "";
+    image.alt = product.name || "Product";
+    image.loading = "lazy";
 
-    const safeImageUrl =
-      /^https:\/\/[^\s"'<>]+$/i.test(imageUrl)
-        ? escapeHTML(imageUrl)
-        : "https://placehold.co/600x400/ece4ff/5634a5?text=Product+Image";
+    image.onerror = () => {
+      image.style.display = "none";
+    };
 
-    return `
-      <article class="product-card">
-        <div class="product-image">
-          <img
-            src="${safeImageUrl}"
-            alt="${name}"
-            loading="lazy"
-            onerror="this.onerror=null;this.src='https://placehold.co/600x400/ece4ff/5634a5?text=Product+Image';"
-          >
-          <span class="product-category">${category}</span>
-        </div>
+    const info = document.createElement("div");
+    info.className = "product-info";
 
-        <div class="product-info">
-          <h3>${name}</h3>
-          <p class="product-description">${description}</p>
+    const title = document.createElement("h3");
+    title.textContent = product.name || "Product";
 
-          <div class="product-bottom">
-            <strong class="product-price">${price}</strong>
-          </div>
+    const description = document.createElement("p");
+    description.textContent = product.description || "";
 
-          <p class="product-stock">
-            ${stock > 0 ? `Stock: ${stock}` : "Out of stock"}
-          </p>
+    const price = document.createElement("p");
+    price.className = "product-price";
+    price.textContent = money(product.price);
 
-          <button
-            type="button"
-            class="add-to-cart"
-            data-action="add"
-            data-id="${id}"
-            ${stock <= 0 ? "disabled" : ""}
-          >
-            ${stock > 0 ? "🛒 Add to Cart" : "Out of Stock"}
-          </button>
-        </div>
-      </article>
-    `;
-  }).join("");
-}
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "add-to-cart";
+    button.dataset.action = "add";
+    button.dataset.id = product.id;
+    button.textContent = Number(product.stock) > 0
+      ? "Add to Cart"
+      : "Out of Stock";
+    button.disabled = Number(product.stock) <= 0;
 
-function setCategory(category) {
-  currentCategory = category || "All";
-  renderProducts();
-
-  document.querySelectorAll("[data-category]").forEach((button) => {
-    button.classList.toggle(
-      "active",
-      button.dataset.category === currentCategory
-    );
+    info.append(title, description, price, button);
+    card.append(image, info);
+    grid.appendChild(card);
   });
 }
 
-function clearSearch() {
-  currentSearch = "";
+// CATEGORY FILTER
+function filterProducts(category = "all") {
+  const selected = String(category).trim().toLowerCase();
 
-  if (searchInput) {
-    searchInput.value = "";
-  }
+  const filtered = products.filter(product => {
+    if (selected === "all") return true;
 
-  renderProducts();
+    const actual = String(product.category || "").trim().toLowerCase();
+    return actual === selected;
+  });
+
+  renderProducts(filtered);
 }
 
-/* =========================================
-   SHOPPING CART
-========================================= */
+document.querySelectorAll("[data-category]").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("[data-category]").forEach(item => {
+      item.classList.toggle("active", item === button);
+    });
 
-function getCartItems() {
-  return cart.map((item) => {
-    const product = products.find(
-      (entry) => String(entry.id) === String(item.productId)
-    );
+    filterProducts(button.dataset.category || "all");
+  });
+});
 
-    return product
-      ? {
-          ...product,
-          quantity: Number(item.quantity || 1)
-        }
-      : null;
-  }).filter(Boolean);
+// SEARCH
+const searchInput = $("#searchInput");
+
+if (searchInput) {
+  searchInput.addEventListener("input", () => {
+    const query = searchInput.value.trim().toLowerCase();
+
+    const filtered = products.filter(product => {
+      const text = [
+        product.name,
+        product.description,
+        product.category
+      ].join(" ").toLowerCase();
+
+      return text.includes(query);
+    });
+
+    renderProducts(filtered);
+  });
 }
 
+// ADD TO CART
 function addToCart(productId) {
-  const product = products.find(
-    (item) => String(item.id) === String(productId)
+  const product = products.find(item =>
+    String(item.id) === String(productId)
   );
 
   if (!product) {
@@ -434,19 +241,17 @@ function addToCart(productId) {
     return;
   }
 
-  const stock = Number(product.stock || 0);
-
-  if (stock <= 0) {
+  if (Number(product.stock) <= 0) {
     showToast("This product is out of stock.");
     return;
   }
 
-  const existing = cart.find(
-    (item) => String(item.productId) === String(product.id)
+  const existing = cart.find(item =>
+    String(item.product_id) === String(product.id)
   );
 
   if (existing) {
-    if (existing.quantity >= stock) {
+    if (Number(existing.quantity) >= Number(product.stock)) {
       showToast("You have reached the available stock.");
       return;
     }
@@ -454,778 +259,249 @@ function addToCart(productId) {
     existing.quantity += 1;
   } else {
     cart.push({
-      productId: product.id,
+      product_id: product.id,
+      name: product.name,
+      price: Number(product.price),
+      image_url: product.image_url || "",
       quantity: 1
     });
   }
 
   saveCart();
-  showToast(`${product.name} added to cart.`);
+  showToast("Added to cart!");
 }
 
-function changeQuantity(productId, change) {
-  const item = cart.find(
-    (entry) => String(entry.productId) === String(productId)
-  );
+ // CART DISPLAY
+function openCart() {
+  const oldModal = document.querySelector("#storeCartModal");
+  if (oldModal) oldModal.remove();
 
-  if (!item) return;
+  const modal = document.createElement("div");
+  modal.id = "storeCartModal";
+  modal.style.cssText = `
+    position:fixed; inset:0; background:#0009; z-index:9999;
+    display:flex; align-items:center; justify-content:center;
+    padding:16px; overflow:auto;
+  `;
 
-  const product = products.find(
-    (entry) => String(entry.id) === String(productId)
-  );
+  const panel = document.createElement("div");
+  panel.style.cssText = `
+    background:white; color:#222; width:100%; max-width:520px;
+    max-height:90vh; overflow:auto; border-radius:14px;
+    padding:20px; box-sizing:border-box;
+  `;
 
-  const maxStock = Number(product?.stock || 0);
-  const newQuantity = Number(item.quantity) + change;
+  let total = 0;
+  const rows = cart.map(item => {
+    const price = Number(item.price) || 0;
+    const quantity = Number(item.quantity) || 0;
+    total += price * quantity;
 
-  if (newQuantity <= 0) {
-    cart = cart.filter(
-      (entry) => String(entry.productId) !== String(productId)
-    );
-  } else if (newQuantity <= maxStock) {
-    item.quantity = newQuantity;
-  } else {
-    showToast("You have reached the available stock.");
-  }
-
-  saveCart();
-  renderCart();
-}
-
-function clearCart() {
-  cart = [];
-  saveCart();
-  renderCart();
-  showToast("Cart cleared.");
-}
-
-function renderCart() {
-  const items = getCartItems();
-
-  const total = items.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
-    0
-  );
-
-  const content = items.length
-    ? `
-      <div class="cart-items">
-        ${items.map((item) => `
-          <div class="cart-item">
-            <div class="cart-product-info">
-              <strong>${escapeHTML(item.name)}</strong>
-              <p>${money(item.price)} each</p>
-            </div>
-
-            <strong class="cart-item-price">
-              ${money(Number(item.price) * item.quantity)}
-            </strong>
-
-            <div class="quantity-controls">
-              <button
-                type="button"
-                data-action="quantity"
-                data-id="${escapeHTML(String(item.id))}"
-                data-change="-1"
-                aria-label="Decrease quantity"
-              >−</button>
-
-              <span>${item.quantity}</span>
-
-              <button
-                type="button"
-                data-action="quantity"
-                data-id="${escapeHTML(String(item.id))}"
-                data-change="1"
-                aria-label="Increase quantity"
-              >+</button>
-            </div>
-          </div>
-        `).join("")}
-      </div>
-
-      <hr>
-
-      <h3>Total: ${money(total)}</h3>
-
-      <button type="button" data-action="checkout">
-        Proceed to Checkout
-      </button>
-
-      <button type="button" data-action="clear-cart">
-        Clear Cart
-      </button>
-    `
-    : `
-      <div class="empty-state">
-        <p>Your cart is empty.</p>
-        <button type="button" data-action="close-modal">
-          Continue Shopping
-        </button>
-      </div>
-    `;
-
-  openModal("My Cart", content);
-}
-
-/* =========================================
-   LOGIN AND REGISTRATION
-========================================= */
-
-function showAccount() {
-  if (currentUser) {
-    logout();
-  } else {
-    renderAuthForm("login");
-  }
-}
-
-function renderAuthForm(mode = "login") {
-  const isRegister = mode === "register";
-
-  openModal(
-    isRegister ? "Create Account" : "Log in",
-    `
-      <div class="auth-tabs">
-        <button
-          type="button"
-          data-action="auth-tab"
-          data-mode="login"
-          ${!isRegister ? 'class="active"' : ""}
-        >Log in</button>
-
-        <button
-          type="button"
-          data-action="auth-tab"
-          data-mode="register"
-          ${isRegister ? 'class="active"' : ""}
-        >Create account</button>
-      </div>
-
-      <form id="authForm">
-        <label for="authUsername">Username</label>
-        <input
-          id="authUsername"
-          name="username"
-          type="text"
-          minlength="3"
-          maxlength="30"
-          autocomplete="username"
-          required
-        >
-
-        <label for="authPassword">Password</label>
-        <div class="password-field">
-          <input
-            id="authPassword"
-            name="password"
-            type="password"
-            minlength="8"
-            maxlength="72"
-            autocomplete="${isRegister ? "new-password" : "current-password"}"
-            required
-          >
-          <button type="button" data-action="toggle-password">
-            Show
-          </button>
+    return `
+      <div style="display:flex;justify-content:space-between;gap:10px;
+                  border-bottom:1px solid #ddd;padding:12px 0">
+        <div>
+          <strong>${escapeHTML(item.name)}</strong><br>
+          ₱${price.toFixed(2)} × ${quantity}
         </div>
+        <div style="text-align:right">
+          <strong>₱${(price * quantity).toFixed(2)}</strong><br>
+          <button data-cart-action="minus"
+                  data-id="${escapeHTML(item.product_id)}">−</button>
+          <button data-cart-action="plus"
+                  data-id="${escapeHTML(item.product_id)}">+</button>
+          <button data-cart-action="remove"
+                  data-id="${escapeHTML(item.product_id)}">Remove</button>
+        </div>
+      </div>`;
+  }).join("");
 
-        <button type="submit" data-mode="${isRegister ? "register" : "login"}">
-          ${isRegister ? "Create Account" : "Log in"}
-        </button>
+  panel.innerHTML = `
+    <h2 style="margin-top:0">🛒 My Cart</h2>
+    ${rows || "<p>Your cart is empty.</p>"}
+    <h3>Total: ₱${total.toFixed(2)}</h3>
+    <button id="checkoutButton" style="padding:12px;width:100%">
+      Proceed to Checkout
+    </button>
+    <button id="closeStoreCart" style="padding:10px;width:100%;margin-top:8px">
+      Continue Shopping
+    </button>
+  `;
 
-        <p id="authMessage" role="status"></p>
-      </form>
-    `
-  );
-}
+  modal.appendChild(panel);
+  document.body.appendChild(modal);
 
-async function submitAuth(event) {
-  event.preventDefault();
+  modal.addEventListener("click", event => {
+    if (event.target === modal) modal.remove();
 
-  const form = event.target;
-  if (form.id !== "authForm") return;
+    const button = event.target.closest("[data-cart-action]");
+    if (!button) return;
 
-  const username = form.elements.username.value.trim();
-  const password = form.elements.password.value;
-  const submitButton = form.querySelector('button[type="submit"]');
-  const message = $("#authMessage");
-  const mode = submitButton?.dataset.mode || "login";
+    const item = cart.find(product =>
+      String(product.product_id) === String(button.dataset.id)
+    );
+    if (!item) return;
 
-  if (submitButton) submitButton.disabled = true;
-  if (message) message.textContent = "Please wait...";
+    if (button.dataset.cartAction === "plus") {
+      const product = products.find(p =>
+        String(p.id) === String(item.product_id)
+      );
 
-  try {
-    const endpoint = mode === "register"
-      ? "/api/auth/register"
-      : "/api/auth/login";
-
-    const data = await apiRequest(endpoint, {
-      method: "POST",
-      body: JSON.stringify({ username, password })
-    });
-
-    if (mode === "register") {
-      renderAuthForm("login");
-
-      const authMessage = $("#authMessage");
-
-      if (authMessage) {
-        authMessage.textContent =
-          data.message || "Account created. Please log in.";
+      if (product && item.quantity < Number(product.stock)) {
+        item.quantity++;
+      } else {
+        showToast("Available stock limit reached.");
       }
+    }
 
+    if (button.dataset.cartAction === "minus") {
+      item.quantity--;
+      if (item.quantity <= 0) {
+        cart = cart.filter(p =>
+          String(p.product_id) !== String(item.product_id)
+        );
+      }
+    }
+
+    if (button.dataset.cartAction === "remove") {
+      cart = cart.filter(p =>
+        String(p.product_id) !== String(item.product_id)
+      );
+    }
+
+    saveCart();
+    modal.remove();
+    openCart();
+  });
+
+  $("#closeStoreCart").onclick = () => modal.remove();
+
+  $("#checkoutButton").onclick = async () => {
+    if (!cart.length) {
+      showToast("Your cart is empty.");
       return;
     }
 
-    currentUser = data.user || null;
-    updateAccountButton();
-    closeModal();
+    try {
+      await checkLoginStatus();
 
-    showToast("Login successful!");
-
-    await loadProducts();
-  } catch (error) {
-    if (message) {
-      message.textContent = error.message;
-    } else {
-      showToast(error.message);
-    }
-  } finally {
-    const currentButton = $("#authForm button[type='submit']");
-    if (currentButton) currentButton.disabled = false;
-  }
-}
-
-/* =========================================
-   CHECKOUT
-========================================= */
-
-function showCheckout() {
-  if (!currentUser) {
-    openModal(
-      "Log in Required",
-      `
-        <div class="checkout-message">
-          <p>Please log in before checking out.</p>
-          <button
-            type="button"
-            data-action="auth-tab"
-            data-mode="login"
-          >Log in</button>
-        </div>
-      `
-    );
-    return;
-  }
-
-  const items = getCartItems();
-
-  if (!items.length) {
-    showToast("Your cart is empty.");
-    return;
-  }
-
-  const subtotal = items.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
-    0
-  );
-
-  const itemCount = items.reduce(
-    (sum, item) => sum + item.quantity,
-    0
-  );
-
-  openModal("💜 Checkout", `
-    <div class="checkout-page">
-      <p class="checkout-subtitle">
-        Complete your order and enjoy your favorite products!
-      </p>
-
-      <div class="checkout-layout">
-        <form id="checkoutForm" class="checkout-form">
-          <section class="checkout-section">
-            <h3>
-              <span class="checkout-step">1</span>
-              Delivery Information
-            </h3>
-
-            <p class="checkout-hint">
-              Please provide your delivery details.
-            </p>
-
-            <label for="checkoutName">Full Name</label>
-            <input
-              id="checkoutName"
-              name="full_name"
-              type="text"
-              placeholder="Enter your full name"
-              autocomplete="name"
-              required
-            >
-
-            <label for="checkoutPhone">Phone Number</label>
-            <input
-              id="checkoutPhone"
-              name="contact_number"
-              type="tel"
-              placeholder="09XX XXX XXXX"
-              autocomplete="tel"
-              required
-            >
-
-            <label for="checkoutAddress">Delivery Address</label>
-            <textarea
-              id="checkoutAddress"
-              name="address"
-              placeholder="House No., Street, Barangay, City"
-              autocomplete="street-address"
-              required
-              rows="2"
-            ></textarea>
-
-            <label for="checkoutInstructions">
-              Delivery Notes (Optional)
-            </label>
-            <textarea
-              id="checkoutInstructions"
-              name="instructions"
-              placeholder="Landmark or special instructions"
-              rows="2"
-            ></textarea>
-          </section>
-
-          <section class="checkout-section">
-            <h3>
-              <span class="checkout-step">2</span>
-              Payment Method
-            </h3>
-
-            <p class="checkout-hint">
-              Choose your preferred payment option.
-            </p>
-
-            <div class="checkout-payment-options">
-              <label class="checkout-payment-card">
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value="COD"
-                  checked
-                >
-                <span class="checkout-payment-icon">💵</span>
-                <span>
-                  <strong>Cash on Delivery</strong>
-                  <small>Pay when your order arrives.</small>
-                </span>
-              </label>
-
-              <label class="checkout-payment-card">
-                <input
-                  type="radio"
-                  name="payment_method"
-                  value="MAYA"
-                >
-                <span class="checkout-payment-icon">💳</span>
-                <span>
-                  <strong>Maya</strong>
-                  <small>Continue through the configured Maya checkout.</small>
-                </span>
-              </label>
-            </div>
-          </section>
-
-          <div class="checkout-secure">
-            🔒 <span>
-              <strong>Safe checkout</strong>
-              <small>Your order information is submitted securely.</small>
-            </span>
-          </div>
-
-          <button class="checkout-place-order" type="submit">
-            Place Order · ${money(subtotal)}
-          </button>
-
-          <p id="checkoutMessage" role="status"
-             class="checkout-message"></p>
-        </form>
-
-        <aside class="checkout-summary">
-          <h3>🛒 Order Summary</h3>
-          <p class="checkout-item-count">
-            ${itemCount} item${itemCount === 1 ? "" : "s"}
-          </p>
-
-          <div class="checkout-summary-items">
-            ${items.map((item) => `
-              <div class="checkout-summary-item">
-                <div class="checkout-item-details">
-                  <strong>${escapeHTML(item.name)}</strong>
-                  <small>${item.quantity} × ${money(item.price)}</small>
-                </div>
-                <strong>
-                  ${money(Number(item.price) * item.quantity)}
-                </strong>
-              </div>
-            `).join("")}
-          </div>
-
-          <div class="checkout-total-row">
-            <span>Subtotal</span>
-            <strong>${money(subtotal)}</strong>
-          </div>
-
-          <div class="checkout-total-row checkout-grand-total">
-            <span>Total</span>
-            <strong>${money(subtotal)}</strong>
-          </div>
-
-          <p class="checkout-summary-note">
-            💜 Thank you for choosing JABIÑAR FOOD STORE!
-          </p>
-        </aside>
-      </div>
-    </div>
-  `);
-}
-
-async function submitCheckout(event) {
-  event.preventDefault();
-
-  const form = event.target;
-  if (form.id !== "checkoutForm") return;
-
-  if (!currentUser) {
-    showToast("Please log in before checking out.");
-    renderAuthForm("login");
-    return;
-  }
-
-  const items = getCartItems();
-
-  if (!items.length) {
-    showToast("Your cart is empty.");
-    closeModal();
-    return;
-  }
-
-  const submitButton = form.querySelector('button[type="submit"]');
-  const message = $("#checkoutMessage");
-
-  if (submitButton) submitButton.disabled = true;
-  if (message) message.textContent = "Processing your order...";
-
-  const payload = {
-    full_name: form.elements.full_name.value.trim(),
-    contact_number: form.elements.contact_number.value.trim(),
-    address: form.elements.address.value.trim(),
-    instructions: form.elements.instructions.value.trim(),
-    items: items.map((item) => ({
-      product_id: item.id,
-      quantity: item.quantity
-    }))
-  };
-
-  try {
-    const paymentMethod = form.elements.payment_method.value;
-
-    if (paymentMethod === "MAYA") {
-      const data = await apiRequest("/api/checkout/maya", {
-        method: "POST",
-        body: JSON.stringify(payload)
-      });
-
-      if (data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
+      if (!currentUser) {
+        window.location.href = "/login.html";
         return;
       }
 
-      throw new Error(
-        "The server did not return a Maya checkout URL."
-      );
-    }
-
-    const data = await apiRequest("/api/orders", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    cart = [];
-    saveCart();
-    closeModal();
-
-    showToast(
-      data.message || "Order placed successfully! Payment: COD."
-    );
-
-    await showOrders();
-  } catch (error) {
-    if (message) {
-      message.textContent = error.message;
-    } else {
+      window.location.href = "/checkout.html";
+    } catch (error) {
       showToast(error.message);
     }
-  } finally {
-    const currentButton = $("#checkoutForm button[type='submit']");
-    if (currentButton) currentButton.disabled = false;
-  }
+  };
 }
 
-/* =========================================
-   MY ORDERS
-========================================= */
-
+// ORDER HISTORY
 async function showOrders() {
   const section = $("#ordersSection");
-  const list = $("#ordersList");
-
-  if (!section || !list) {
-    showToast("The orders section is missing from index.html.");
-    return;
-  }
-
-  if (!currentUser) {
-    renderAuthForm("login");
-    return;
-  }
-
-  section.classList.remove("hidden");
-  list.innerHTML = "<p>Loading your orders...</p>";
 
   try {
     const data = await apiRequest("/api/orders");
+
+    if (section) {
+      section.hidden = false;
+      section.innerHTML = "<h2>My Orders</h2>";
+    }
+
     const orders = Array.isArray(data.orders) ? data.orders : [];
 
     if (!orders.length) {
-      list.innerHTML = "<p>You have no orders yet.</p>";
+      if (section) {
+        section.innerHTML += "<p>You have no orders yet.</p>";
+        section.scrollIntoView({ behavior: "smooth" });
+      } else {
+        showToast("You have no orders yet.");
+      }
       return;
     }
 
-    list.innerHTML = orders.map((order) => {
-      let orderItems = order.items || [];
+    const list = section || document.createElement("section");
+    if (!section) {
+      list.id = "ordersSection";
+      document.querySelector("main")?.appendChild(list);
+      list.innerHTML = "<h2>My Orders</h2>";
+    }
 
-      if (typeof orderItems === "string") {
-        try {
-          orderItems = JSON.parse(orderItems);
-        } catch {
-          orderItems = [];
-        }
-      }
+    orders.forEach(order => {
+      const card = document.createElement("article");
+      card.style.cssText =
+        "border:1px solid #ddd;border-radius:10px;padding:12px;margin:10px 0";
 
-      const itemMarkup = Array.isArray(orderItems)
-        ? orderItems.map((item) => `
-            <li>
-              ${escapeHTML(item.name || item.product_name || "Product")}
-              × ${Number(item.quantity || 1)}
-            </li>
-          `).join("")
-        : "";
+      const title = document.createElement("h3");
+      title.textContent = `Order #${order.id}`;
 
-      return `
-        <article class="order-card">
-          <h3>Order #${escapeHTML(order.id)}</h3>
-          <p>Status: ${escapeHTML(order.status || "Pending")}</p>
-          <p>Payment: ${escapeHTML(order.payment_method || "COD")}</p>
-          <p>Total: ${money(order.total_amount ?? order.total ?? 0)}</p>
-          <ul>${itemMarkup}</ul>
-        </article>
-      `;
-    }).join("");
+      const details = document.createElement("p");
+      details.textContent =
+        `Total: ${money(order.total_amount)} | ` +
+        `Payment: ${order.payment_method || "N/A"} | ` +
+        `Status: ${order.order_status || "Pending"}`;
+
+      card.append(title, details);
+      list.appendChild(card);
+    });
+
+    list.scrollIntoView({ behavior: "smooth" });
   } catch (error) {
-    list.innerHTML = `
-      <p>Unable to load orders.</p>
-      <p>${escapeHTML(error.message)}</p>
-      <button type="button" data-action="my-orders">
-        Try Again
-      </button>
-    `;
+    if (error.message.toLowerCase().includes("unauthorized") ||
+        error.message.toLowerCase().includes("login")) {
+      window.location.href = "/login.html";
+      return;
+    }
+
+    showToast(error.message || "Unable to load orders.");
   }
 }
 
-/* =========================================
-   MAYA RETURN MESSAGE
-========================================= */
+// BUTTON ACTIONS
+document.addEventListener("click", event => {
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
 
-function handleMayaReturn() {
-  const params = new URLSearchParams(window.location.search);
+  const action = button.dataset.action;
 
-  const hasMayaParams = [
-    "payment",
-    "status",
-    "checkoutId",
-    "checkout_id"
-  ].some((key) => params.has(key));
+  if (action === "add") {
+    addToCart(button.dataset.id);
+  } else if (action === "cart") {
+    openCart();
+  } else if (action === "account") {
+    if (currentUser) {
+      logout();
+    } else {
+      window.location.href = "/login.html";
+    }
+  } else if (action === "my-orders") {
+    showOrders();
+  }
+});
 
-  if (!hasMayaParams) return;
-
-  showToast(
-    "Returned from Maya. Check My Orders for the latest order status."
-  );
-
-  history.replaceState(
-    {},
-    document.title,
-    window.location.pathname
-  );
+// CART BUTTON
+const cartToggle = $("#cartToggle");
+if (cartToggle) {
+  cartToggle.addEventListener("click", openCart);
 }
 
-/* =========================================
-   CLICK EVENTS
-========================================= */
+// INITIALIZE
+async function initializeStore() {
+  loadCart();
 
-document.addEventListener("click", async (event) => {
-  const target = event.target;
+  const user = await checkLoginStatus();
 
-  if (!(target instanceof Element)) return;
-
-  const categoryButton = target.closest("[data-category]");
-
-  if (categoryButton) {
-    setCategory(categoryButton.dataset.category);
+  if (!user) {
+    window.location.replace("/login.html");
     return;
   }
 
-  const button = target.closest("[data-action]");
-  if (!button) return;
-
-  switch (button.dataset.action) {
-    case "account":
-      await checkLoginStatus();
-
-      if (currentUser) {
-        await logout();
-      } else {
-        renderAuthForm("login");
-      }
-      break;
-
-    case "cart":
-      renderCart();
-      break;
-
-    case "my-orders":
-      await showOrders();
-      break;
-
-    case "hide-orders": {
-      const section = $("#ordersSection");
-      if (section) section.classList.add("hidden");
-      break;
-    }
-
-    case "add":
-      addToCart(button.dataset.id);
-      break;
-
-    case "quantity":
-      changeQuantity(
-        button.dataset.id,
-        Number(button.dataset.change)
-      );
-      break;
-
-    case "clear-cart":
-      clearCart();
-      break;
-
-    case "checkout":
-      showCheckout();
-      break;
-
-    case "close-modal":
-      closeModal();
-      break;
-
-    case "auth-tab":
-      renderAuthForm(button.dataset.mode || "login");
-      break;
-
-    case "toggle-password": {
-      const passwordInput = $("#authPassword");
-
-      if (passwordInput) {
-        const showing = passwordInput.type === "text";
-
-        passwordInput.type = showing ? "password" : "text";
-        button.textContent = showing ? "Show" : "Hide";
-      }
-      break;
-    }
-
-    case "clear-search":
-      clearSearch();
-      break;
-
-    case "retry-products":
-      await loadProducts();
-      break;
-  }
-});
-
-/* =========================================
-   SEARCH AND FORM EVENTS
-========================================= */
-
-if (searchForm) {
-  searchForm.addEventListener("submit", (event) => {
-    event.preventDefault();
-
-    currentSearch = searchInput
-      ? searchInput.value.trim()
-      : "";
-
-    renderProducts();
-  });
-}
-
-if (searchInput) {
-  searchInput.addEventListener("input", () => {
-    currentSearch = searchInput.value.trim();
-    renderProducts();
-  });
-}
-
-document.addEventListener("submit", async (event) => {
-  if (event.target.id === "authForm") {
-    await submitAuth(event);
-  }
-
-  if (event.target.id === "checkoutForm") {
-    await submitCheckout(event);
-  }
-});
-
-if (modalBackdrop) {
-  modalBackdrop.addEventListener("click", (event) => {
-    if (event.target === modalBackdrop) {
-      closeModal();
-    }
-  });
-}
-
-/* =========================================
-   START THE STORE
-========================================= */
-
-async function initializeStore() {
-  console.log("JABIÑAR FOOD STORE initializing...");
-
-  updateCartCount();
-
-  await checkLoginStatus();
-
-  handleMayaReturn();
-
   await loadProducts();
-
-  console.log("JABIÑAR FOOD STORE initialization finished.");
 }
 
 if (document.readyState === "loading") {
-  document.addEventListener(
-    "DOMContentLoaded",
-    initializeStore,
-    { once: true }
-  );
+  document.addEventListener("DOMContentLoaded", initializeStore);
 } else {
   initializeStore();
 }

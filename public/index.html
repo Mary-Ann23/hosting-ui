@@ -1038,6 +1038,38 @@ button.add-to-cart:hover,
     }
     
   
+/* ===== JABINAR GROCERY IMAGE BANNER ===== */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+  border-radius: 22px;
+  background: #f1ebff;
+  display: block;
+  box-shadow: 0 8px 28px rgba(61, 38, 105, 0.12);
+}
+
+.hero-banner-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 8;
+  object-fit: cover;
+  object-position: center;
+}
+
+@media (max-width: 650px) {
+  .hero {
+    border-radius: 16px;
+  }
+
+  .hero-banner-image {
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+  }
+}
+
   </style>
 </head>
 
@@ -1072,18 +1104,18 @@ button.add-to-cart:hover,
   </header>
 
   <main id="home" class="page-container">
-    <section class="hero">
-      <div>
-        <span class="hero-label">YOUR EVERYDAY GROCERY STORE</span>
-        <h1>Fresh choices for a happier home.</h1>
-        <p>
-          Shop your everyday essentials in one place.
-          Browse your favorites and get your grocery order ready.
-        </p>
-        <a href="#menu" class="hero-button">Shop Now &nbsp; →</a>
-      </div>
-      <div class="hero-emoji" aria-hidden="true">🛒 🥑</div>
-    </section>
+
+<section class="hero">
+  <a href="#menu" aria-label="Shop JABIÑAR FOOD STORE products">
+    <img
+      class="hero-banner-image"
+      src="/images/jabinar-food-store-banner.png"
+      alt="JABIÑAR FOOD STORE grocery banner"
+      fetchpriority="high"
+    >
+  </a>
+</section>
+    
 
     <section class="search-section" aria-label="Search products">
       <form id="searchForm" class="search-form">

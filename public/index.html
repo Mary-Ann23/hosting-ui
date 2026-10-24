@@ -725,8 +725,26 @@
       }
 
       .header-actions {
-        gap: 6px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
       }
+      .brand {
+  flex: 0 0 auto;
+}
+
+.brand-name {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.header-button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
 
       .header-button {
         padding: 9px 10px;
@@ -788,8 +806,10 @@
       }
 
       .header-inner {
-        gap: 8px;
-      }
+  padding: 12px 14px;
+  align-items: center;
+  gap: 12px;
+}
 
       .header-button {
         padding: 8px;

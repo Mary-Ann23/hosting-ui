@@ -1789,3 +1789,89 @@ a:focus-visible {
   }
   }
   
+/* ==================================
+   JABIÑAR FOOD STORE
+   NAVIGATION AND CART ALIGNMENT
+================================== */
+
+.site-header,
+header,
+.header {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+/* Compact navigation */
+nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-width: 100%;
+}
+
+nav a,
+nav button {
+  box-sizing: border-box;
+  border-radius: 12px;
+}
+
+/* Center the cart modal */
+#modalBackdrop {
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+/* Compact modal */
+#modalContent {
+  width: min(440px, 100%);
+  max-width: 440px;
+  max-height: 85vh;
+  margin: auto;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  border-radius: 20px;
+}
+
+/* Cart content should not stick to the side */
+#modalContent .cart-page,
+#modalContent .cart-container,
+#modalContent .cart-content,
+#modalContent .cart-layout {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  nav {
+    gap: 6px;
+  }
+
+  nav a,
+  nav button {
+    padding: 9px 10px;
+    font-size: 13px;
+  }
+
+  #modalBackdrop {
+    padding: 12px;
+  }
+
+  #modalContent {
+    width: 100%;
+    max-width: 400px;
+    max-height: 85vh;
+    padding: 15px;
+    border-radius: 18px;
+  }
+}
+  

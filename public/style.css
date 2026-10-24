@@ -1568,3 +1568,224 @@ padding: 11px;
   }
 }
   
+/* =========================================
+   JABINAR FOOD STORE
+   PURPLE & WHITE HOME PAGE DESIGN
+========================================= */
+
+:root {
+  --ink: #30213d;
+  --muted: #786b83;
+  --primary: #7c3aed;
+  --primary-dark: #5b21b6;
+  --border: #eee5f7;
+  --surface: #ffffff;
+  --soft-purple: #f7f2ff;
+}
+
+/* Main page */
+body {
+  color: var(--ink);
+  background: #faf8ff;
+}
+
+.container,
+main {
+  box-sizing: border-box;
+}
+
+/* Header */
+header,
+.site-header,
+.header {
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+}
+
+header a,
+.site-header a,
+.header a {
+  color: var(--ink);
+}
+
+header button,
+.site-header button,
+.header button {
+  border-radius: 12px;
+}
+
+/* Search bar */
+#searchForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+#searchInput {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 11px 14px;
+  border: 1px solid #e5d8f5;
+  border-radius: 13px;
+  background: #fff;
+  color: var(--ink);
+  box-sizing: border-box;
+}
+
+#searchInput:focus {
+  outline: 2px solid #c4a5fd;
+  border-color: var(--primary);
+}
+
+/* Category buttons */
+.category-list,
+.categories,
+.category-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.category-list button,
+.categories button,
+.category-chips button {
+  border: 1px solid #e5d8f5;
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: #fff;
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.category-list button.active,
+.categories button.active,
+.category-chips button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* Product section */
+#productGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Product cards */
+#productGrid > * {
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 15px;
+}
+
+#productGrid img {
+  display: block;
+  max-width: 100%;
+  object-fit: cover;
+}
+
+#productGrid button {
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  border-radius: 10px;
+}
+
+/* Product headings */
+h1,
+h2,
+h3 {
+  color: var(--ink);
+}
+
+button {
+  cursor: pointer;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+}
+
+/* Mobile layout */
+@media (max-width: 600px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  #productGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  #productGrid > * {
+    padding: 10px;
+    border-radius: 13px;
+  }
+
+  #productGrid img {
+    width: 100%;
+    height: 125px;
+    border-radius: 10px;
+  }
+
+  #productGrid h3 {
+    font-size: 14px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  #productGrid p {
+    font-size: 13px;
+    overflow-wrap: anywhere;
+  }
+
+  #productGrid button {
+    font-size: 12px;
+    padding: 9px 7px;
+  }
+
+  #searchForm {
+    gap: 6px;
+  }
+
+  .category-list,
+  .categories,
+  .category-chips {
+    gap: 7px;
+  }
+
+  .category-list button,
+  .categories button,
+  .category-chips button {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+
+/* Small phones */
+@media (max-width: 360px) {
+  #productGrid {
+    gap: 8px;
+  }
+
+  #productGrid img {
+    height: 105px;
+  }
+
+  #productGrid > * {
+    padding: 8px;
+  }
+  }
+  

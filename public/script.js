@@ -271,7 +271,6 @@ function addToCart(productId) {
   showToast("Added to cart!");
 }
 
- // CART DISPLAY
 function openCart() {
   const oldModal = document.querySelector("#storeCartModal");
   if (oldModal) oldModal.remove();
@@ -279,51 +278,211 @@ function openCart() {
   const modal = document.createElement("div");
   modal.id = "storeCartModal";
   modal.style.cssText = `
-    position:fixed; inset:0; background:#0009; z-index:9999;
-    display:flex; align-items:center; justify-content:center;
-    padding:16px; overflow:auto;
+    position:fixed;
+    inset:0;
+    background:rgba(28,20,44,.65);
+    z-index:9999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
+    overflow-y:auto;
+    backdrop-filter:blur(4px);
   `;
 
   const panel = document.createElement("div");
   panel.style.cssText = `
-    background:white; color:#222; width:100%; max-width:520px;
-    max-height:90vh; overflow:auto; border-radius:14px;
-    padding:20px; box-sizing:border-box;
+    background:linear-gradient(180deg,#fff,#faf7ff);
+    color:#282238;
+    width:100%;
+    max-width:490px;
+    max-height:90vh;
+    overflow:auto;
+    border-radius:22px;
+    padding:23px;
+    box-sizing:border-box;
+    border:1px solid #ece7f4;
+    box-shadow:0 20px 70px rgba(45,25,85,.25);
   `;
 
   let total = 0;
+
   const rows = cart.map(item => {
     const price = Number(item.price) || 0;
     const quantity = Number(item.quantity) || 0;
     total += price * quantity;
 
     return `
-      <div style="display:flex;justify-content:space-between;gap:10px;
-                  border-bottom:1px solid #ddd;padding:12px 0">
-        <div>
-          <strong>${escapeHTML(item.name)}</strong><br>
-          ₱${price.toFixed(2)} × ${quantity}
+      <div style="
+        display:grid;
+        grid-template-columns:minmax(0,1fr) auto;
+        gap:10px;
+        align-items:center;
+        padding:14px;
+        margin:12px 0;
+        border:1px solid #ece7f4;
+        border-radius:15px;
+        background:#fff;
+      ">
+        <div style="min-width:0;overflow-wrap:anywhere">
+          <strong style="color:#5634a5;font-size:14px">
+            ${escapeHTML(item.name)}
+          </strong>
+
+          <p style="margin:6px 0;color:#777184;font-size:12px">
+            ₱${price.toFixed(2)} each
+          </p>
+
+          <div style="
+            display:flex;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:10px;
+            margin-top:10px;
+          ">
+            <button
+              data-cart-action="minus"
+              data-id="${escapeHTML(item.product_id)}"
+              style="
+                width:34px;height:34px;
+                border:1px solid #e5dafb;
+                border-radius:10px;
+                background:#f1ebff;
+                color:#5634a5;
+                font-size:20px;
+                font-weight:bold;
+              ">−</button>
+
+            <strong>${quantity}</strong>
+
+            <button
+              data-cart-action="plus"
+              data-id="${escapeHTML(item.product_id)}"
+              style="
+                width:34px;height:34px;
+                border:1px solid #e5dafb;
+                border-radius:10px;
+                background:#f1ebff;
+                color:#5634a5;
+                font-size:20px;
+                font-weight:bold;
+              ">+</button>
+
+            <button
+              data-cart-action="remove"
+              data-id="${escapeHTML(item.product_id)}"
+              style="
+                border:0;
+                border-radius:9px;
+                padding:8px;
+                background:#ffecf4;
+                color:#a33a55;
+                font-weight:bold;
+              ">Remove</button>
+          </div>
         </div>
-        <div style="text-align:right">
-          <strong>₱${(price * quantity).toFixed(2)}</strong><br>
-          <button data-cart-action="minus"
-                  data-id="${escapeHTML(item.product_id)}">−</button>
-          <button data-cart-action="plus"
-                  data-id="${escapeHTML(item.product_id)}">+</button>
-          <button data-cart-action="remove"
-                  data-id="${escapeHTML(item.product_id)}">Remove</button>
-        </div>
-      </div>`;
+
+        <strong style="color:#5634a5;white-space:nowrap">
+          ₱${(price * quantity).toFixed(2)}
+        </strong>
+      </div>
+    `;
   }).join("");
 
   panel.innerHTML = `
-    <h2 style="margin-top:0">🛒 My Cart</h2>
-    ${rows || "<p>Your cart is empty.</p>"}
-    <h3>Total: ₱${total.toFixed(2)}</h3>
-    <button id="checkoutButton" style="padding:12px;width:100%">
-      Proceed to Checkout
+    <div style="
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:18px;
+    ">
+      <div>
+        <h2 style="margin:0;color:#5634a5">
+          🛒 My Cart
+        </h2>
+        <p style="margin:6px 0 0;color:#777184;font-size:13px">
+          Your grocery selections
+        </p>
+      </div>
+
+      <button
+        id="closeStoreCart"
+        aria-label="Close cart"
+        style="
+          width:38px;height:38px;
+          border:0;
+          border-radius:50%;
+          background:#f1ebff;
+          color:#5634a5;
+          font-size:23px;
+        ">×</button>
+    </div>
+
+    ${rows || `
+      <div style="
+        padding:25px 12px;
+        text-align:center;
+        background:#f8f4ff;
+        border-radius:15px;
+        color:#777184;
+      ">
+        <div style="font-size:42px">🛍️</div>
+        <h3 style="color:#5634a5">Your cart is empty</h3>
+        <p>Add some products to get started!</p>
+      </div>
+    `}
+  `;
+    panel.innerHTML += `
+    <div style="
+      margin-top:16px;
+      padding:18px;
+      border-radius:16px;
+      background:#f1ebff;
+      border:1px solid #e5dafb;
+    ">
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:10px;
+      ">
+        <span style="color:#655a79">Total Amount</span>
+        <strong style="font-size:22px;color:#5634a5">
+          ₱${total.toFixed(2)}
+        </strong>
+      </div>
+    </div>
+
+    <button
+      id="storeCartCheckout"
+      style="
+        width:100%;
+        margin-top:15px;
+        padding:15px;
+        border:0;
+        border-radius:13px;
+        background:linear-gradient(135deg,#7546cf,#5634a5);
+        color:white;
+        font-size:15px;
+        font-weight:bold;
+        box-shadow:0 5px 14px rgba(86,52,165,.22);
+      ">
+      Proceed to Checkout →
     </button>
-    <button id="closeStoreCart" style="padding:10px;width:100%;margin-top:8px">
+
+    <button
+      id="continueShopping"
+      style="
+        width:100%;
+        margin-top:10px;
+        padding:13px;
+        border:1px solid #e5dafb;
+        border-radius:13px;
+        background:white;
+        color:#5634a5;
+        font-weight:bold;
+      ">
       Continue Shopping
     </button>
   `;
@@ -331,71 +490,88 @@ function openCart() {
   modal.appendChild(panel);
   document.body.appendChild(modal);
 
+  const closeCartModal = () => modal.remove();
+
   modal.addEventListener("click", event => {
-    if (event.target === modal) modal.remove();
+    if (event.target === modal) {
+      closeCartModal();
+      return;
+    }
 
     const button = event.target.closest("[data-cart-action]");
     if (!button) return;
 
-    const item = cart.find(product =>
-      String(product.product_id) === String(button.dataset.id)
+    const id = String(button.dataset.id);
+    const action = button.dataset.cartAction;
+
+    const item = cart.find(
+      product => String(product.product_id) === id
     );
+
     if (!item) return;
 
-    if (button.dataset.cartAction === "plus") {
-      const product = products.find(p =>
-        String(p.id) === String(item.product_id)
+    if (action === "plus") {
+      const product = products.find(
+        product => String(product.id) === id
       );
 
-      if (product && item.quantity < Number(product.stock)) {
-        item.quantity++;
-      } else {
-        showToast("Available stock limit reached.");
-      }
-    }
+      const stock = Number(product?.stock ?? 0);
 
-    if (button.dataset.cartAction === "minus") {
-      item.quantity--;
+      if (item.quantity >= stock) {
+        alert("Sorry, maximum available stock reached.");
+        return;
+      }
+
+      item.quantity += 1;
+    } else if (action === "minus") {
+      item.quantity -= 1;
+
       if (item.quantity <= 0) {
-        cart = cart.filter(p =>
-          String(p.product_id) !== String(item.product_id)
+        cart = cart.filter(
+          product => String(product.product_id) !== id
         );
       }
-    }
-
-    if (button.dataset.cartAction === "remove") {
-      cart = cart.filter(p =>
-        String(p.product_id) !== String(item.product_id)
+    } else if (action === "remove") {
+      cart = cart.filter(
+        product => String(product.product_id) !== id
       );
     }
 
     saveCart();
-    modal.remove();
+    closeCartModal();
     openCart();
   });
 
-  $("#closeStoreCart").onclick = () => modal.remove();
+  panel.querySelector("#closeStoreCart")
+    .addEventListener("click", closeCartModal);
 
-  $("#checkoutButton").onclick = async () => {
-    if (!cart.length) {
-      showToast("Your cart is empty.");
-      return;
-    }
+  panel.querySelector("#continueShopping")
+    .addEventListener("click", closeCartModal);
 
-    try {
-      await checkLoginStatus();
-
-      if (!currentUser) {
-        window.location.href = "/login.html";
+  panel.querySelector("#storeCartCheckout")
+    .addEventListener("click", async () => {
+      if (!cart.length) {
+        alert("Your cart is empty. Please add products first.");
         return;
       }
 
-      window.location.href = "/checkout.html";
-    } catch (error) {
-      showToast(error.message);
-    }
-  };
+      try {
+        const loggedIn = await checkLoginStatus();
+
+        if (!loggedIn) {
+          window.location.href = "/login.html";
+          return;
+        }
+
+        window.location.href = "/checkout.html";
+      } catch (error) {
+        console.error("Checkout error:", error);
+        alert("Unable to verify your login. Please try again.");
+      }
+    });
 }
+
+      
 
 // ORDER HISTORY
 async function showOrders() {

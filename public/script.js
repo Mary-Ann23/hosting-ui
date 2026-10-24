@@ -50,7 +50,7 @@ function showToast(message) {
 function loadCart() {
   try {
     const saved = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
-    cart = Array.isArray(saved) ? saved : [];
+    cart = Array.isArray(saved) ? saved : []; 
   } catch {
     cart = [];
   }
@@ -570,63 +570,6 @@ function openCart() {
       }
     });
 }
-
-      
-async function showOrders() {
-  const section = $("#ordersSection");
-  const list = $("#ordersList");
-
-  if (!section || !list) {
-    showToast("My Orders section not found.");
-    return;
-  }
-
-  section.classList.remove("hidden");
-  section.hidden = false;
-  list.innerHTML = "<p>Loading your orders...</p>";
-
-  section.scrollIntoView({ behavior: "smooth" });
-
-  try {
-    const data = await apiRequest("/api/orders");
-    const orders = Array.isArray(data.orders) ? data.orders : [];
-
-    list.replaceChildren();
-
-    if (!orders.length) {
-      list.innerHTML = "<p>You have no orders yet.</p>";
-      return;
-    }
-
-    orders.forEach(order => {
-      const card = document.createElement("article");
-      card.style.cssText =
-        "border:1px solid #ddd;border-radius:10px;padding:12px;margin:10px 0";
-
-      const title = document.createElement("h3");
-      title.textContent = `Order #${order.id}`;
-
-      const details = document.createElement("p");
-      details.textContent =
-        `Total: ${money(order.total_amount)} | ` +
-        `Payment: ${order.payment_method || "N/A"} | ` +
-        `Status: ${order.order_status || "Pending"}`;
-
-      card.append(title, details);
-      list.appendChild(card);
-    });
-  } catch (error) {
-    list.replaceChildren();
-
-    const message = document.createElement("p");
-    message.textContent = error.message || "Unable to load orders.";
-    list.appendChild(message);
-
-    if (/unauthorized|login/i.test(error.message)) {
-      window.location.href = "/login.html";
-    }
-  }
-}
 // ORDER HISTORY
 async function showOrders() {
   const section = $("#ordersSection");
@@ -640,7 +583,6 @@ async function showOrders() {
   section.hidden = false;
   section.classList.remove("hidden");
   list.innerHTML = "<p>Loading your orders...</p>";
-
   section.scrollIntoView({ behavior: "smooth" });
 
   try {
@@ -683,6 +625,35 @@ async function showOrders() {
     }
   }
 }
+
+// BUTTON ACTIONS
+document.addEventListener("click", event => {
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
+
+  const action = button.dataset.action;
+
+  if (action === "add") {
+    addToCart(button.dataset.id);
+  } else if (action === "cart") {
+    openCart();
+  } else if (action === "account") {
+    if (currentUser) {
+      logout();
+    } else {
+      window.location.href = "/login.html";
+    }
+  } else if (action === "my-orders") {
+    showOrders();
+  } else if (action === "hide-orders") {
+    const section = $("#ordersSection");
+    if (section) {
+      section.hidden = true;
+      section.classList.add("hidden");
+    }
+  }
+});
+
 // CART BUTTON
 const cartToggle = $("#cartToggle");
 if (cartToggle) {

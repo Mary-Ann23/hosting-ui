@@ -1,4 +1,4 @@
-p"use strict";
+"use strict";
 
 const CART_KEY = "jfs_cart";
 const $ = (selector) => document.querySelector(selector);

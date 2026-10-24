@@ -1,4 +1,4 @@
-"use strict";
+p"use strict";
 
 const CART_KEY = "jfs_cart";
 const $ = (selector) => document.querySelector(selector);
@@ -570,7 +570,9 @@ function openCart() {
       }
     });
 }
-// ORDER HISTORY
+
+
+ // ORDER HISTORY
 async function showOrders() {
   const section = $("#ordersSection");
   const list = $("#ordersList");
@@ -599,65 +601,100 @@ async function showOrders() {
     orders.forEach(order => {
       const card = document.createElement("article");
       card.style.cssText =
-        "border:1px solid #ddd;border-radius:10px;padding:12px;margin:10px 0";
+        "border:1px solid #ddd;border-radius:12px;padding:16px;margin:14px 0;background:#fff;color:#222";
 
       const title = document.createElement("h3");
       title.textContent = `Order #${order.id}`;
 
-      const details = document.createElement("p");
-      details.textContent =
-        `Total: ${money(order.total_amount)} | ` +
-        `Payment: ${order.payment_method || "N/A"} | ` +
-        `Status: ${order.order_status || "Pending"}`;
+      const status = document.createElement("p");
+      status.textContent =
+        `Order Status: ${order.order_status || "Pending"}`;
 
-      card.append(title, details);
+      const payment = document.createElement("p");
+      payment.textContent =
+        `Payment Method: ${order.payment_method || "N/A"}`;
+
+      const paymentStatus = document.createElement("p");
+      paymentStatus.textContent =
+        `Payment Status: ${order.payment_status || "Pending"}`;
+
+      const date = document.createElement("p");
+      date.textContent = order.created_at
+        ? `Date: ${new Date(order.created_at).toLocaleString()}`
+        : "";
+
+      const address = document.createElement("p");
+      address.textContent =
+        `Delivery Address: ${order.delivery_address || "N/A"}`;
+
+      const heading = document.createElement("h4");
+      heading.textContent = "Order Items";
+
+      const itemsList = document.createElement("div");
+      itemsList.style.cssText =
+        "border-top:1px solid #eee;margin-top:10px;padding-top:8px";
+
+      const items = Array.isArray(order.items) ? order.items : [];
+
+      if (!items.length) {
+        itemsList.textContent = "No item details available.";
+      } else {
+        items.forEach(item => {
+          const row = document.createElement("div");
+          row.style.cssText =
+            "display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #eee";
+
+          const productInfo = document.createElement("div");
+          const name = document.createElement("strong");
+          name.textContent = item.product_name || "Product";
+
+          const quantity = document.createElement("p");
+          quantity.style.cssText = "margin:4px 0;color:#666;font-size:14px";
+          quantity.textContent =
+            `${money(item.price)} × ${Number(item.quantity || 0)}`;
+
+          productInfo.append(name, quantity);
+
+          const subtotal = document.createElement("strong");
+          subtotal.textContent = money(
+            Number(item.price || 0) * Number(item.quantity || 0)
+          );
+
+          row.append(productInfo, subtotal);
+          itemsList.appendChild(row);
+        });
+      }
+
+      const total = document.createElement("h3");
+      total.style.cssText = "text-align:right;margin-top:14px";
+      total.textContent = `Total: ${money(order.total_amount)}`;
+
+      card.append(
+        title,
+        status,
+        payment,
+        paymentStatus,
+        date,
+        address,
+        heading,
+        itemsList,
+        total
+      );
+
       list.appendChild(card);
     });
   } catch (error) {
     list.replaceChildren();
 
     const message = document.createElement("p");
-    message.textContent = error.message || "Unable to load orders.";
+    message.textContent =
+      error.message || "Unable to load orders.";
     list.appendChild(message);
 
-    if (/unauthorized|login/i.test(error.message)) {
+    if (/unauthorized|login/i.test(error.message || "")) {
       window.location.href = "/login.html";
     }
   }
-}
-
-// BUTTON ACTIONS
-document.addEventListener("click", event => {
-  const button = event.target.closest("[data-action]");
-  if (!button) return;
-
-  const action = button.dataset.action;
-
-  if (action === "add") {
-    addToCart(button.dataset.id);
-  } else if (action === "cart") {
-    openCart();
-  } else if (action === "account") {
-    if (currentUser) {
-      logout();
-    } else {
-      window.location.href = "/login.html";
-    }
-  } else if (action === "my-orders") {
-    showOrders();
-  } else if (action === "hide-orders") {
-    const section = $("#ordersSection");
-    if (section) {
-      section.hidden = true;
-      section.classList.add("hidden");
-    }
-  }
-});
-
-// CART BUTTON
-const cartToggle = $("#cartToggle");
-if (cartToggle) {
-  cartToggle.addEventListener("click", openCart);
 }
 
 // INITIALIZE

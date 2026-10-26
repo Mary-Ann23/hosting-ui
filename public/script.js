@@ -669,6 +669,35 @@ async function showOrders() {
       total.style.cssText = "text-align:right;margin-top:14px";
       total.textContent = `Total: ${money(order.total_amount)}`;
 
+    
+const orderStatus = String(order.order_status || "")
+  .trim()
+  .toUpperCase();
+
+if (orderStatus === "PENDING") {
+  const cancelButton = document.createElement("button");
+
+  cancelButton.type = "button";
+  cancelButton.textContent = "Cancel Order";
+  cancelButton.style.cssText = `
+    display:block;
+    margin:12px 0 0 auto;
+    padding:11px 16px;
+    border:0;
+    border-radius:10px;
+    background:#b42335;
+    color:#fff;
+    font-weight:bold;
+    cursor:pointer;
+  `;
+
+  cancelButton.addEventListener("click", () => {
+    cancelOrder(order.id, cancelButton);
+  });
+
+  card.appendChild(cancelButton);
+}
+  
       card.append(
         title,
         status,
@@ -694,6 +723,34 @@ async function showOrders() {
     if (/unauthorized|login/i.test(error.message || "")) {
       window.location.href = "/login.html";
     }
+  }
+}
+
+
+async function cancelOrder(orderId, button) {
+  const confirmed = window.confirm(
+    `Are you sure you want to cancel Order #${orderId}?`
+  );
+
+  if (!confirmed) return;
+
+  button.disabled = true;
+  button.textContent = "Cancelling...";
+
+  try {
+    const data = await apiRequest(
+      `/api/orders/${encodeURIComponent(orderId)}/cancel`,
+      { method: "POST" }
+    );
+
+    showToast(data.message || "Order cancelled successfully.");
+
+    await showOrders();
+    await loadProducts();
+  } catch (error) {
+    showToast(error.message || "Unable to cancel order.");
+    button.disabled = false;
+    button.textContent = "Cancel Order";
   }
 }
 

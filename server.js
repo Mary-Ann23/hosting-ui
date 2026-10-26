@@ -728,6 +728,91 @@ app.post("/api/checkout/maya", requireAuth, async (req, res) => {
 });
 
 
+app.post("/api/orders/:id/cancel", requireAuth, async (req, res) => {
+  const client = await getPool().connect();
+
+  try {
+    const orderId = Number(req.params.id);
+    const userId = req.session.user.id;
+
+    if (!Number.isSafeInteger(orderId) || orderId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID."
+      });
+    }
+
+    await client.query("BEGIN");
+
+    const orderResult = await client.query(
+      `SELECT id, order_status
+       FROM orders
+       WHERE id = $1 AND user_id = $2
+       FOR UPDATE`,
+      [orderId, userId]
+    );
+
+    if (orderResult.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({
+        success: false,
+        message: "Order not found."
+      });
+    }
+
+    const order = orderResult.rows[0];
+
+    if (String(order.order_status).toUpperCase() !== "PENDING") {
+      await client.query("ROLLBACK");
+      return res.status(409).json({
+        success: false,
+        message: "Only pending orders can be cancelled."
+      });
+    }
+
+    const itemsResult = await client.query(
+      `SELECT product_id, quantity
+       FROM order_items
+       WHERE order_id = $1`,
+      [orderId]
+    );
+
+    for (const item of itemsResult.rows) {
+      await client.query(
+        `UPDATE products
+         SET stock = stock + $1
+         WHERE id = $2`,
+        [item.quantity, item.product_id]
+      );
+    }
+
+    await client.query(
+      `UPDATE orders
+       SET order_status = 'CANCELLED'
+       WHERE id = $1 AND user_id = $2`,
+      [orderId, userId]
+    );
+
+    await client.query("COMMIT");
+
+    return res.json({
+      success: true,
+      message: "Order cancelled successfully."
+    });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+
+    console.error("Cancel order error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to cancel order."
+    });
+  } finally {
+    client.release();
+  }
+});
+
 // ========================================
 // CUSTOMER ORDER HISTORY
 // ========================================

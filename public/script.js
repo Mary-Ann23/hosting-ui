@@ -573,6 +573,7 @@ function openCart() {
 
 
  // ORDER HISTORY
+
 async function showOrders() {
   const section = $("#ordersSection");
   const list = $("#ordersList");
@@ -600,15 +601,36 @@ async function showOrders() {
 
     orders.forEach(order => {
       const card = document.createElement("article");
+
       card.style.cssText =
         "border:1px solid #ddd;border-radius:12px;padding:16px;margin:14px 0;background:#fff;color:#222";
 
       const title = document.createElement("h3");
       title.textContent = `Order #${order.id}`;
 
+      const statusValue = String(
+        order.order_status || "PENDING"
+      ).trim().toUpperCase();
+
       const status = document.createElement("p");
-      status.textContent =
-        `Order Status: ${order.order_status || "Pending"}`;
+      status.textContent = `Order Status: ${statusValue}`;
+
+      const tracking = document.createElement("p");
+      tracking.style.cssText =
+        "padding:10px;border-radius:8px;background:#f3f7ff;color:#234;font-weight:bold";
+
+      const trackingMessages = {
+        PENDING: "Waiting for the store to process your order.",
+        PROCESSING: "Your order is being prepared.",
+        COMPLETED: "Your order has been completed.",
+        CANCELLED: "This order has been cancelled."
+      };
+
+      tracking.textContent =
+        `Order Tracking: ${
+          trackingMessages[statusValue] ||
+          "Please contact the store for an update."
+        }`;
 
       const payment = document.createElement("p");
       payment.textContent =
@@ -616,7 +638,7 @@ async function showOrders() {
 
       const paymentStatus = document.createElement("p");
       paymentStatus.textContent =
-        `Payment Status: ${order.payment_status || "Pending"}`;
+        `Payment Status: ${order.payment_status || "PENDING"}`;
 
       const date = document.createElement("p");
       date.textContent = order.created_at
@@ -641,15 +663,19 @@ async function showOrders() {
       } else {
         items.forEach(item => {
           const row = document.createElement("div");
+
           row.style.cssText =
             "display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #eee";
 
           const productInfo = document.createElement("div");
+
           const name = document.createElement("strong");
           name.textContent = item.product_name || "Product";
 
           const quantity = document.createElement("p");
-          quantity.style.cssText = "margin:4px 0;color:#666;font-size:14px";
+          quantity.style.cssText =
+            "margin:4px 0;color:#666;font-size:14px";
+
           quantity.textContent =
             `${money(item.price)} × ${Number(item.quantity || 0)}`;
 
@@ -657,7 +683,8 @@ async function showOrders() {
 
           const subtotal = document.createElement("strong");
           subtotal.textContent = money(
-            Number(item.price || 0) * Number(item.quantity || 0)
+            Number(item.price || 0) *
+            Number(item.quantity || 0)
           );
 
           row.append(productInfo, subtotal);
@@ -669,38 +696,10 @@ async function showOrders() {
       total.style.cssText = "text-align:right;margin-top:14px";
       total.textContent = `Total: ${money(order.total_amount)}`;
 
-    
-const orderStatus = String(order.order_status || "")
-  .trim()
-  .toUpperCase();
-
-if (orderStatus === "PENDING") {
-  const cancelButton = document.createElement("button");
-
-  cancelButton.type = "button";
-  cancelButton.textContent = "Cancel Order";
-  cancelButton.style.cssText = `
-    display:block;
-    margin:12px 0 0 auto;
-    padding:11px 16px;
-    border:0;
-    border-radius:10px;
-    background:#b42335;
-    color:#fff;
-    font-weight:bold;
-    cursor:pointer;
-  `;
-
-  cancelButton.addEventListener("click", () => {
-    cancelOrder(order.id, cancelButton);
-  });
-
-  card.appendChild(cancelButton);
-}
-  
       card.append(
         title,
         status,
+        tracking,
         payment,
         paymentStatus,
         date,
@@ -710,6 +709,64 @@ if (orderStatus === "PENDING") {
         total
       );
 
+      // Cancel only orders that are still pending.
+      if (statusValue === "PENDING") {
+        const cancelButton = document.createElement("button");
+
+        cancelButton.type = "button";
+        cancelButton.textContent = "Cancel Order";
+
+        cancelButton.style.cssText =
+          "display:block;margin:12px 0 0 auto;padding:11px 16px;border:0;border-radius:10px;background:#b42335;color:#fff;font-weight:bold;cursor:pointer";
+
+        cancelButton.addEventListener("click", () => {
+          cancelOrder(order.id, cancelButton);
+        });
+
+        card.appendChild(cancelButton);
+      }
+
+      // Delete only cancelled orders.
+      if (statusValue === "CANCELLED") {
+        const deleteButton = document.createElement("button");
+
+        deleteButton.type = "button";
+        deleteButton.textContent = "Delete Order";
+
+        deleteButton.style.cssText =
+          "display:block;margin:12px 0 0 auto;padding:11px 16px;border:0;border-radius:10px;background:#8b1e2d;color:#fff;font-weight:bold;cursor:pointer";
+
+        deleteButton.addEventListener("click", async () => {
+          const confirmed = window.confirm(
+            `Permanently delete Order #${order.id}? This cannot be undone.`
+          );
+
+          if (!confirmed) return;
+
+          deleteButton.disabled = true;
+          deleteButton.textContent = "Deleting...";
+
+          try {
+            const result = await apiRequest(
+              `/api/orders/${encodeURIComponent(order.id)}`,
+              { method: "DELETE" }
+            );
+
+            showToast(
+              result.message || "Order deleted successfully."
+            );
+
+            await showOrders();
+          } catch (error) {
+            showToast(error.message || "Unable to delete order.");
+            deleteButton.disabled = false;
+            deleteButton.textContent = "Delete Order";
+          }
+        });
+
+        card.appendChild(deleteButton);
+      }
+
       list.appendChild(card);
     });
   } catch (error) {
@@ -718,6 +775,7 @@ if (orderStatus === "PENDING") {
     const message = document.createElement("p");
     message.textContent =
       error.message || "Unable to load orders.";
+
     list.appendChild(message);
 
     if (/unauthorized|login/i.test(error.message || "")) {

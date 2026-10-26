@@ -510,6 +510,7 @@ app.post("/api/orders", requireAuth, async (req, res) => {
       req.session.user.id,
       req.body,
       "COD"
+      "MAYA"
     );
 
     return res.status(201).json({

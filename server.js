@@ -605,14 +605,21 @@ app.post("/api/checkout/maya", requireAuth, async (req, res) => {
       }
     );
 
-    const data = await response.json();
-    console.log("Maya checkout response:", {
+
+const data = await response.json();
+
+const redirectHost = data.redirectUrl
+  ? new URL(data.redirectUrl).hostname
+  : null;
+
+console.log("Maya checkout response:", {
   status: response.status,
   hasRedirectUrl: Boolean(data.redirectUrl),
   hasCheckoutId: Boolean(data.checkoutId || data.id),
+  redirectHost,
   message: data.message || null
 });
-
+    
     if (!response.ok || !data.redirectUrl) {
       console.error("Maya create checkout failed:", {
         status: response.status,

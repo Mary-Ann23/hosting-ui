@@ -1043,6 +1043,179 @@ app.patch(
 );
 
 
+
+/* ========================================
+   CUSTOMER: DELETE OWN ORDER
+   Only cancelled orders can be deleted.
+======================================== */
+
+app.delete("/api/orders/:id", requireAuth, async (req, res) => {
+  const client = await getPool().connect();
+
+  try {
+    const orderId = Number(req.params.id);
+    const userId = req.session.user.id;
+
+    if (!Number.isSafeInteger(orderId) || orderId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid order ID."
+      });
+    }
+
+    await client.query("BEGIN");
+
+    const result = await client.query(
+      `SELECT id, order_status
+       FROM orders
+       WHERE id = $1 AND user_id = $2
+       FOR UPDATE`,
+      [orderId, userId]
+    );
+
+    if (result.rowCount === 0) {
+      await client.query("ROLLBACK");
+
+      return res.status(404).json({
+        success: false,
+        message: "Order not found."
+      });
+    }
+
+    if (String(result.rows[0].order_status).toUpperCase() !== "CANCELLED") {
+      await client.query("ROLLBACK");
+
+      return res.status(409).json({
+        success: false,
+        message: "Only cancelled orders can be deleted from My Orders."
+      });
+    }
+
+    await client.query(
+      "DELETE FROM order_items WHERE order_id = $1",
+      [orderId]
+    );
+
+    await client.query(
+      "DELETE FROM orders WHERE id = $1 AND user_id = $2",
+      [orderId, userId]
+    );
+
+    await client.query("COMMIT");
+
+    return res.json({
+      success: true,
+      message: "Cancelled order deleted successfully."
+    });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+
+    console.error("Customer delete order error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to delete order."
+    });
+  } finally {
+    client.release();
+  }
+});
+
+
+/* ========================================
+   ADMIN: DELETE ANY ORDER
+======================================== */
+
+app.delete(
+  "/api/admin/orders/:id",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    const client = await getPool().connect();
+
+    try {
+      const orderId = Number(req.params.id);
+
+      if (!Number.isSafeInteger(orderId) || orderId <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid order ID."
+        });
+      }
+
+      await client.query("BEGIN");
+
+      const result = await client.query(
+        `SELECT id, order_status
+         FROM orders
+         WHERE id = $1
+         FOR UPDATE`,
+        [orderId]
+      );
+
+      if (result.rowCount === 0) {
+        await client.query("ROLLBACK");
+
+        return res.status(404).json({
+          success: false,
+          message: "Order not found."
+        });
+      }
+
+      const order = result.rows[0];
+      const status = String(order.order_status).toUpperCase();
+
+      // Restore stock only for a still-pending order.
+      // CANCELLED orders already had their stock restored.
+      if (status === "PENDING") {
+        const items = await client.query(
+          `SELECT product_id, quantity
+           FROM order_items
+           WHERE order_id = $1`,
+          [orderId]
+        );
+
+        for (const item of items.rows) {
+          await client.query(
+            `UPDATE products
+             SET stock = stock + $1
+             WHERE id = $2`,
+            [item.quantity, item.product_id]
+          );
+        }
+      }
+
+      await client.query(
+        "DELETE FROM order_items WHERE order_id = $1",
+        [orderId]
+      );
+
+      await client.query(
+        "DELETE FROM orders WHERE id = $1",
+        [orderId]
+      );
+
+      await client.query("COMMIT");
+
+      return res.json({
+        success: true,
+        message: `Order #${orderId} deleted successfully.`
+      });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => {});
+
+      console.error("Admin delete order error:", error.message);
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to delete order."
+      });
+    } finally {
+      client.release();
+    }
+  }
+);
+
 // ========================================
 // DATABASE CHECK
 // ========================================

@@ -1,9 +1,12 @@
 
+"use strict";
+
 const express = require("express");
 const path = require("path");
 const session = require("express-session");
 const PgSession = require("connect-pg-simple")(session);
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 require("dotenv").config();
 
 const { getPool } = require("./db");
@@ -15,14 +18,14 @@ const isProduction = process.env.NODE_ENV === "production";
 const SESSION_SECRET = process.env.SESSION_SECRET;
 
 app.set("trust proxy", 1);
-app.use(express.json());
+app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: true }));
 
 if (!SESSION_SECRET) {
   throw new Error("SESSION_SECRET is missing from environment variables.");
 }
 
-// Session configuration: Neon PostgreSQL
+// PostgreSQL session configuration
 app.use(
   session({
     name: "jabinar.sid",
@@ -44,7 +47,7 @@ app.use(
   })
 );
 
-// Authentication middleware
+// Require login
 function requireAuth(req, res, next) {
   if (!req.session.user) {
     if (req.path.startsWith("/api/")) {
@@ -60,6 +63,45 @@ function requireAuth(req, res, next) {
   next();
 }
 
+// Require admin: check the database every time
+async function requireAdmin(req, res, next) {
+  if (!req.session.user) {
+    return res.status(401).json({
+      success: false,
+      message: "Please log in first."
+    });
+  }
+
+  try {
+    const result = await getPool().query(
+      `SELECT is_admin
+       FROM users
+       WHERE id = $1
+       LIMIT 1`,
+      [req.session.user.id]
+    );
+
+    if (
+      result.rows.length === 0 ||
+      result.rows[0].is_admin !== true
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "Admin access only."
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error("Admin verification error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to verify admin permissions."
+    });
+  }
+}
+
 // Page helpers
 function sendLoginPage(req, res) {
   return res.sendFile(
@@ -73,7 +115,8 @@ function sendHomePage(req, res) {
   );
 }
 
-// Login page
+
+ // Login page
 app.get("/login.html", (req, res) => {
   if (req.session.user) {
     return res.redirect("/");
@@ -95,22 +138,22 @@ app.get("/api/database-status", async (req, res) => {
   try {
     await testDatabase();
 
-    res.json({
+    return res.json({
       success: true,
       message: "Neon PostgreSQL connected successfully!"
     });
   } catch (error) {
     console.error("Database connection failed:", error.message);
 
-    res.status(503).json({
+    return res.status(503).json({
       success: false,
       message: "Database connection is not ready."
     });
   }
 });
 
-// Check current login status
-app.get("/api/auth/me", (req, res) => {
+// Current logged-in account
+app.get("/api/auth/me", async (req, res) => {
   if (!req.session.user) {
     return res.status(401).json({
       success: false,
@@ -118,13 +161,41 @@ app.get("/api/auth/me", (req, res) => {
     });
   }
 
-  return res.json({
-    success: true,
-    user: req.session.user
-  });
+  try {
+    const result = await getPool().query(
+      `SELECT is_admin
+       FROM users
+       WHERE id = $1
+       LIMIT 1`,
+      [req.session.user.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: "Account not found."
+      });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        ...req.session.user,
+        is_admin: result.rows[0].is_admin === true
+      }
+    });
+  } catch (error) {
+    console.error("Auth status error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Unable to check login status."
+    });
+  }
 });
 
 // Register account
+// New accounts are customers, not admins.
 app.post("/api/auth/register", async (req, res) => {
   try {
     const username =
@@ -152,27 +223,22 @@ app.post("/api/auth/register", async (req, res) => {
       });
     }
 
-    const db = getPool();
+    const passwordHash = await bcrypt.hash(password, 12);
 
-    const existing = await db.query(
-      "SELECT id FROM users WHERE username = $1",
-      [username]
+    const result = await getPool().query(
+      `INSERT INTO users (username, password_hash)
+       VALUES ($1, $2)
+       ON CONFLICT (username) DO NOTHING
+       RETURNING id`,
+      [username, passwordHash]
     );
 
-    if (existing.rows.length > 0) {
+    if (result.rows.length === 0) {
       return res.status(409).json({
         success: false,
         message: "Username already exists. Please choose another."
       });
     }
-
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    await db.query(
-      `INSERT INTO users (username, password_hash)
-       VALUES ($1, $2)`,
-      [username, passwordHash]
-    );
 
     return res.status(201).json({
       success: true,
@@ -181,13 +247,6 @@ app.post("/api/auth/register", async (req, res) => {
   } catch (error) {
     console.error("Registration error:", error.message);
 
-    if (error.code === "23505") {
-      return res.status(409).json({
-        success: false,
-        message: "Username already exists. Please choose another."
-      });
-    }
-
     return res.status(500).json({
       success: false,
       message: "Unable to create account right now."
@@ -195,7 +254,7 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// Log in
+// Login
 app.post("/api/auth/login", async (req, res) => {
   try {
     const username =
@@ -215,9 +274,7 @@ app.post("/api/auth/login", async (req, res) => {
       });
     }
 
-    const db = getPool();
-
-    const result = await db.query(
+    const result = await getPool().query(
       `SELECT id, username, password_hash
        FROM users
        WHERE username = $1
@@ -246,7 +303,6 @@ app.post("/api/auth/login", async (req, res) => {
       });
     }
 
-    // Create a new session after successful login.
     req.session.regenerate((error) => {
       if (error) {
         console.error("Session error:", error.message);
@@ -289,7 +345,7 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// Log out
+// Logout
 app.post("/api/auth/logout", (req, res) => {
   req.session.destroy((error) => {
     if (error) {
@@ -315,7 +371,7 @@ app.post("/api/auth/logout", (req, res) => {
   });
 });
 
-// Home page: login required
+// Home page requires login
 app.get("/", (req, res) => {
   if (!req.session.user) {
     return res.redirect("/login.html");
@@ -324,17 +380,15 @@ app.get("/", (req, res) => {
   return sendHomePage(req, res);
 });
 
-// Direct access to index.html also requires login
+// Direct index.html access requires login
 app.get("/index.html", requireAuth, (req, res) => {
   return sendHomePage(req, res);
 });
 
-// Products: login required
+ // Products API — logged-in customers only
 app.get("/api/products", requireAuth, async (req, res) => {
   try {
-    const db = getPool();
-
-    const result = await db.query(`
+    const result = await getPool().query(`
       SELECT id, name, description, price,
              image_url, stock, category
       FROM products
@@ -354,8 +408,8 @@ app.get("/api/products", requireAuth, async (req, res) => {
     });
   }
 });
-const crypto = require("crypto");
 
+// Create an order inside a database transaction
 async function createOrder(client, userId, body, paymentMethod) {
   const fullName = String(body.full_name || "").trim();
   const contactNumber = String(body.contact_number || "").trim();
@@ -363,15 +417,19 @@ async function createOrder(client, userId, body, paymentMethod) {
   const instructions = String(body.instructions || "").trim();
   const items = body.items;
 
-  if (!fullName || !contactNumber || !address) {
+  if (
+    !fullName ||
+    !contactNumber ||
+    !address ||
+    fullName.length > 150 ||
+    contactNumber.length > 40 ||
+    address.length > 1000 ||
+    instructions.length > 1000
+  ) {
     throw new Error("Please complete your delivery details.");
   }
 
-  if (
-    !Array.isArray(items) ||
-    items.length === 0 ||
-    items.length > 50
-  ) {
+  if (!Array.isArray(items) || items.length === 0 || items.length > 50) {
     throw new Error("Your cart is empty or invalid.");
   }
 
@@ -394,12 +452,21 @@ async function createOrder(client, userId, body, paymentMethod) {
     quantities.set(id, (quantities.get(id) || 0) + quantity);
   }
 
+  for (const quantity of quantities.values()) {
+    if (quantity > 100) {
+      throw new Error("Total quantity for a product cannot exceed 100.");
+    }
+  }
+
   const ids = [...quantities.keys()];
 
+  // Lock rows to help prevent simultaneous orders from overselling stock.
   const productResult = await client.query(
     `SELECT id, name, price, stock
      FROM products
-     WHERE id = ANY($1::int[])`,
+     WHERE id = ANY($1::bigint[])
+     ORDER BY id
+     FOR UPDATE`,
     [ids]
   );
 
@@ -408,7 +475,7 @@ async function createOrder(client, userId, body, paymentMethod) {
   }
 
   const products = new Map(
-    productResult.rows.map(product => [
+    productResult.rows.map((product) => [
       Number(product.id),
       product
     ])
@@ -420,12 +487,13 @@ async function createOrder(client, userId, body, paymentMethod) {
   for (const [id, quantity] of quantities) {
     const product = products.get(id);
     const price = Number(product.price);
+    const stock = Number(product.stock);
 
     if (!Number.isFinite(price) || price < 0) {
       throw new Error("Invalid product price.");
     }
 
-    if (Number(product.stock) < quantity) {
+    if (!Number.isFinite(stock) || stock < quantity) {
       throw new Error(`${product.name} does not have enough stock.`);
     }
 
@@ -472,18 +540,21 @@ async function createOrder(client, userId, body, paymentMethod) {
        VALUES ($1, $2, $3, $4, $5)`,
       [order.id, item.id, item.name, item.quantity, item.price]
     );
+
+    await client.query(
+      `UPDATE products
+       SET stock = stock - $1
+       WHERE id = $2`,
+      [item.quantity, item.id]
+    );
   }
 
-  return {
-    order,
-    orderItems,
-    total
-  };
+  return { order, orderItems, total };
 }
 
+// Transaction wrapper
 async function createOrderTransaction(userId, body, method) {
-  const pool = getPool();
-  const client = await pool.connect();
+  const client = await getPool().connect();
 
   try {
     await client.query("BEGIN");
@@ -503,14 +574,15 @@ async function createOrderTransaction(userId, body, method) {
   } finally {
     client.release();
   }
-    }
+}
+
+// COD checkout
 app.post("/api/orders", requireAuth, async (req, res) => {
   try {
     const result = await createOrderTransaction(
       req.session.user.id,
       req.body,
       "COD"
-      
     );
 
     return res.status(201).json({
@@ -527,60 +599,69 @@ app.post("/api/orders", requireAuth, async (req, res) => {
     });
   }
 });
-app.post("/api/checkout/maya", requireAuth, async (req, res) => {
-  let orderId;
+// ========================================
+// MAYA SANDBOX CHECKOUT
+// ========================================
 
+app.post("/api/checkout/maya", requireAuth, async (req, res) => {
   try {
     const publicKey = process.env.MAYA_PUBLIC_KEY;
-    const secretKey = process.env.MAYA_SECRET_KEY;
     const baseUrl = process.env.MAYA_BASE_URL;
     const appUrl = process.env.APP_BASE_URL;
 
     if (!publicKey || !baseUrl || !appUrl) {
-      return res.status(503).json({
+      return res.status(500).json({
         success: false,
-        message: "Maya Sandbox is not fully configured."
+        message: "Maya environment variables are missing."
       });
     }
 
     if (!baseUrl.startsWith("https://pg-sandbox.paymaya.com")) {
-      return res.status(503).json({
+      return res.status(500).json({
         success: false,
-        message: "Maya Sandbox URL is invalid."
+        message: "Maya Sandbox URL is not configured correctly."
       });
     }
 
-    const created = await createOrderTransaction(
+    // Create the order using the existing transaction function
+    const order = await createOrderTransaction(
       req.session.user.id,
       req.body,
       "MAYA"
     );
 
-    orderId = created.order.id;
-
-    const requestReferenceNumber =
+    const orderId = order.id;
+    const referenceNumber =
       `JFS-${orderId}-${crypto.randomUUID()}`.slice(0, 36);
 
-    const items = created.orderItems.map(item => ({
-      name: item.name,
-      quantity: item.quantity,
-      amount: {
-        value: Number(item.price.toFixed(2))
-      },
+    const checkoutPayload = {
       totalAmount: {
-        value: Number(
-          (item.price * item.quantity).toFixed(2)
-        )
-      }
-    }));
-
-    const payload = {
-      totalAmount: {
-        value: Number(created.total.toFixed(2)),
+        value: Number(order.total_amount),
         currency: "PHP"
       },
-      items,
-      requestReferenceNumber,
+      buyer: {
+        firstName: String(req.body.fullName || "").trim(),
+        contact: {
+          phone: String(req.body.contactNumber || "").trim()
+        },
+        shippingAddress: {
+          firstName: String(req.body.fullName || "").trim(),
+          line1: String(req.body.deliveryAddress || "").trim()
+        }
+      },
+      items: (req.body.items || []).map((item) => ({
+        name: String(item.name || "Store item"),
+        quantity: Number(item.quantity),
+        amount: {
+          value: Number(item.price),
+          currency: "PHP"
+        },
+        totalAmount: {
+          value: Number(item.price) * Number(item.quantity),
+          currency: "PHP"
+        }
+      })),
+      requestReferenceNumber: referenceNumber,
       redirectUrl: {
         success: `${appUrl}/?maya=success`,
         failure: `${appUrl}/?maya=failure`,
@@ -588,65 +669,53 @@ app.post("/api/checkout/maya", requireAuth, async (req, res) => {
       }
     };
 
-    const auth = Buffer
-      .from(`${publicKey}:`)
-      .toString("base64");
-
     const response = await fetch(
-      `${baseUrl}/checkout/v1/checkouts`,
+      `${baseUrl.replace(/\/+$/, "")}/checkout/v1/checkouts`,
       {
         method: "POST",
         headers: {
-          Authorization: `Basic ${auth}`,
           "Content-Type": "application/json",
-          Accept: "application/json"
+          Authorization:
+            "Basic " +
+            Buffer.from(`${publicKey}:`).toString("base64")
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(checkoutPayload)
       }
     );
 
+    const data = await response.json().catch(() => ({}));
 
-const data = await response.json();
-
-const redirectHost = data.redirectUrl
-  ? new URL(data.redirectUrl).hostname
-  : null;
-
-console.log("Maya checkout response:", {
-  status: response.status,
-  hasRedirectUrl: Boolean(data.redirectUrl),
-  hasCheckoutId: Boolean(data.checkoutId || data.id),
-  redirectHost,
-  message: data.message || null
-});
-    
-    if (!response.ok || !data.redirectUrl) {
-      console.error("Maya create checkout failed:", {
+    if (
+      !response.ok ||
+      !(data.redirectUrl) ||
+      !(data.checkoutId || data.id)
+    ) {
+      console.error("Maya checkout creation failed:", {
         status: response.status,
-        message: data.message
+        message: data.message || data.error || "Unknown error"
       });
 
       return res.status(502).json({
         success: false,
-        message: "Unable to create Maya checkout. Please try again."
+        message:
+          "Unable to create Maya checkout. Please check the Maya Sandbox configuration."
       });
     }
+
+    const checkoutId = data.checkoutId || data.id;
 
     await getPool().query(
       `UPDATE orders
        SET maya_checkout_id = $1
        WHERE id = $2 AND user_id = $3`,
-      [
-        data.checkoutId || data.id,
-        orderId,
-        req.session.user.id
-      ]
+      [checkoutId, orderId, req.session.user.id]
     );
 
     return res.json({
       success: true,
-      order: created.order,
-      checkoutUrl: data.redirectUrl
+      message: "Maya checkout created.",
+      checkoutUrl: data.redirectUrl,
+      orderId
     });
   } catch (error) {
     console.error("Maya checkout error:", error.message);
@@ -657,26 +726,35 @@ console.log("Maya checkout response:", {
     });
   }
 });
+
+
+// ========================================
+// CUSTOMER ORDER HISTORY
+// ========================================
+
 app.get("/api/orders", requireAuth, async (req, res) => {
   try {
     const result = await getPool().query(
       `SELECT
          o.id,
+         o.user_id,
          o.total_amount,
          o.payment_method,
          o.payment_status,
          o.order_status,
-         o.created_at,
          o.full_name,
          o.contact_number,
          o.delivery_address,
+         o.delivery_instructions,
+         o.created_at,
          COALESCE(
            json_agg(
              json_build_object(
                'product_id', oi.product_id,
                'product_name', oi.product_name,
                'quantity', oi.quantity,
-               'price', oi.price
+               'price', oi.price,
+               'subtotal', oi.subtotal
              )
            ) FILTER (WHERE oi.id IS NOT NULL),
            '[]'::json
@@ -694,7 +772,7 @@ app.get("/api/orders", requireAuth, async (req, res) => {
       orders: result.rows
     });
   } catch (error) {
-    console.error("My Orders error:", error.message);
+    console.error("Customer orders error:", error.message);
 
     return res.status(500).json({
       success: false,
@@ -702,39 +780,211 @@ app.get("/api/orders", requireAuth, async (req, res) => {
     });
   }
 });
-// Serve CSS, JavaScript, images and other public assets.
-// Do not automatically serve index.html.
+// ========================================
+// ADMIN: VIEW ALL ORDERS
+// ========================================
+
+app.get(
+  "/api/admin/orders",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const result = await getPool().query(
+        `SELECT
+           o.id,
+           o.user_id,
+           u.username,
+           o.total_amount,
+           o.payment_method,
+           o.payment_status,
+           o.order_status,
+           o.full_name,
+           o.contact_number,
+           o.delivery_address,
+           o.delivery_instructions,
+           o.created_at,
+           COALESCE(
+             json_agg(
+               json_build_object(
+                 'product_id', oi.product_id,
+                 'product_name', oi.product_name,
+                 'quantity', oi.quantity,
+                 'price', oi.price,
+                 'subtotal', oi.subtotal
+               )
+             ) FILTER (WHERE oi.id IS NOT NULL),
+             '[]'::json
+           ) AS items
+         FROM orders o
+         JOIN users u ON u.id = o.user_id
+         LEFT JOIN order_items oi ON oi.order_id = o.id
+         GROUP BY o.id, u.username
+         ORDER BY o.created_at DESC`
+      );
+
+      return res.json({
+        success: true,
+        orders: result.rows
+      });
+    } catch (error) {
+      console.error("Admin orders error:", error.message);
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to load all orders."
+      });
+    }
+  }
+);
+
+
+// ========================================
+// ADMIN: UPDATE ORDER STATUS
+// ========================================
+
+app.patch(
+  "/api/admin/orders/:id/status",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const orderId = Number(req.params.id);
+      const status = String(req.body.status || "")
+        .trim()
+        .toUpperCase();
+
+      const allowedStatuses = [
+        "PENDING",
+        "PROCESSING",
+        "COMPLETED",
+        "CANCELLED"
+      ];
+
+      if (
+        !Number.isSafeInteger(orderId) ||
+        orderId <= 0 ||
+        !allowedStatuses.includes(status)
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid order ID or order status."
+        });
+      }
+
+      const result = await getPool().query(
+        `UPDATE orders
+         SET order_status = $1
+         WHERE id = $2
+         RETURNING id, order_status, payment_status`,
+        [status, orderId]
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "Order not found."
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: "Order status updated.",
+        order: result.rows[0]
+      });
+    } catch (error) {
+      console.error("Update order status error:", error.message);
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to update order status."
+      });
+    }
+  }
+);
+
+
+// ========================================
+// ADMIN: CONFIRM COD PAYMENT
+// ========================================
+
+app.patch(
+  "/api/admin/orders/:id/cod-payment",
+  requireAuth,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const orderId = Number(req.params.id);
+
+      if (!Number.isSafeInteger(orderId) || orderId <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid order ID."
+        });
+      }
+
+      const result = await getPool().query(
+        `UPDATE orders
+         SET payment_status = 'PAID'
+         WHERE id = $1
+           AND UPPER(payment_method) = 'COD'
+           AND UPPER(payment_status) = 'PENDING'
+         RETURNING id, payment_method, payment_status`,
+        [orderId]
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(409).json({
+          success: false,
+          message:
+            "Order not found, not COD, or payment is not pending."
+        });
+      }
+
+      return res.json({
+        success: true,
+        message: "COD payment marked as received.",
+        order: result.rows[0]
+      });
+    } catch (error) {
+      console.error("COD payment update error:", error.message);
+
+      return res.status(500).json({
+        success: false,
+        message: "Unable to update COD payment."
+      });
+    }
+  }
+);
+
+
+// ========================================
+// DATABASE CHECK
+// ========================================
 
 app.get("/api/db-check", requireAuth, async (req, res) => {
   try {
-    const db = getPool();
-
-    const result = await db.query(`
-      SELECT
-        current_database() AS database_name,
-        (SELECT COUNT(*) FROM products) AS total_products,
-        (
-          SELECT COUNT(*)
-          FROM products
-          WHERE image_url LIKE '%placehold.co%'
-        ) AS placeholder_images
-    `);
+    const result = await testDatabase();
 
     return res.json({
       success: true,
-      database: result.rows[0].database_name,
-      total_products: Number(result.rows[0].total_products),
-      placeholder_images: Number(result.rows[0].placeholder_images)
+      message: "Neon PostgreSQL connected successfully!",
+      result
     });
   } catch (error) {
     console.error("Database check error:", error.message);
 
     return res.status(500).json({
       success: false,
-      message: "Database diagnostic failed."
+      message: "Database connection failed."
     });
   }
 });
+
+
+// ========================================
+// SERVE FRONTEND FILES
+// ========================================
 
 app.use(
   express.static(path.join(__dirname, "public"), {
@@ -742,7 +992,11 @@ app.use(
   })
 );
 
+
+// ========================================
+// START SERVER
+// ========================================
+
 app.listen(PORT, "0.0.0.0", () => {
-  console.log("Server started on port " + PORT);
+  console.log(`JABIÑAR FOOD STORE running on port ${PORT}`);
 });
-                            

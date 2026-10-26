@@ -531,6 +531,7 @@ app.post("/api/checkout/maya", requireAuth, async (req, res) => {
 
   try {
     const publicKey = process.env.MAYA_PUBLIC_KEY;
+    const secretKey = process.env.MAYA_SECRET_KEY;
     const baseUrl = process.env.MAYA_BASE_URL;
     const appUrl = process.env.APP_BASE_URL;
 

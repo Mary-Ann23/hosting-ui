@@ -716,3 +716,48 @@ if (document.readyState === "loading") {
 } else {
   initializeStore();
 }
+
+/* ===== STORE BUTTON HANDLERS ===== */
+
+document.addEventListener("click", event => {
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
+
+  const action = button.dataset.action;
+
+  if (action === "add") {
+    addToCart(button.dataset.id);
+  }
+
+  if (action === "cart") {
+    openCart();
+  }
+
+  if (action === "account") {
+    if (currentUser) {
+      logout();
+    } else {
+      window.location.href = "/login.html";
+    }
+  }
+
+  if (action === "my-orders") {
+    showOrders();
+  }
+
+  if (action === "hide-orders") {
+    const section = $("#ordersSection");
+    if (section) {
+      section.hidden = true;
+      section.classList.add("hidden");
+    }
+  }
+});
+
+/* Keep cart button working */
+const cartToggle = $("#cartToggle");
+
+if (cartToggle) {
+  cartToggle.addEventListener("click", openCart);
+}
+

@@ -419,13 +419,25 @@
       color: var(--ink);
     }
 
-    .orders-section {
-      margin-top: 45px;
-      padding: 22px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: white;
-    }
+
+.orders-section {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  width: min(92%, 700px);
+  max-height: 82dvh;
+  overflow-y: auto;
+  margin: 0;
+  padding: 22px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: white;
+  box-shadow: 0 20px 70px rgba(28, 20, 44, .25);
+  box-sizing: border-box;
+}
+
 
     .orders-section h2 {
       margin-top: 0;

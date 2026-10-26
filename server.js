@@ -754,7 +754,7 @@ app.get("/api/orders", requireAuth, async (req, res) => {
                'product_name', oi.product_name,
                'quantity', oi.quantity,
                'price', oi.price,
-               'subtotal', oi.subtotal
+               'subtotal', (oi.price * oi.quantity)
              )
            ) FILTER (WHERE oi.id IS NOT NULL),
            '[]'::json
@@ -811,7 +811,7 @@ app.get(
                  'product_name', oi.product_name,
                  'quantity', oi.quantity,
                  'price', oi.price,
-                 'subtotal', oi.subtotal
+                 'subtotal', (oi.price * oi.quantity)
                )
              ) FILTER (WHERE oi.id IS NOT NULL),
              '[]'::json

@@ -664,27 +664,28 @@ items: result.orderItems.map((item) => ({
   }
 })),
 requestReferenceNumber: referenceNumber,
-redirectUrl: {
-  success: `${appUrl}/?maya=success`,
-  failure: `${appUrl}/?maya=failure`,
-  cancel: `${appUrl}/?maya=cancel`
-}
-
+      
+      redirectUrl: {
+        success: `${appUrl}/?maya=success`,
+        failure: `${appUrl}/?maya=failure`,
+        cancel: `${appUrl}/?maya=cancel`
+      }
+    };
 
     const response = await fetch(
       `${baseUrl.replace(/\/+$/, "")}/checkout/v1/checkouts`,
       {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization:
+            "Basic " +
+            Buffer.from(
+              `${process.env.MAYA_SECRET_KEY}:`
+            ).toString("base64")
+        },
         
-headers: {
-  "Content-Type": "application/json",
-  Authorization:
-    "Basic " +
-    Buffer.from(
-      `${process.env.MAYA_SECRET_KEY}:`
-    ).toString("base64")
-},
-        
+
         body: JSON.stringify(checkoutPayload)
       }
     );

@@ -624,13 +624,14 @@ app.post("/api/checkout/maya", requireAuth, async (req, res) => {
     }
 
     // Create the order using the existing transaction function
-    const order = await createOrderTransaction(
-      req.session.user.id,
-      req.body,
-      "MAYA"
-    );
+    const result = await createOrderTransaction(
+  req.session.user.id,
+  req.body,
+  "MAYA"
+);
 
-    const orderId = order.id;
+const order = result.order;
+const orderId = order.id;
     const referenceNumber =
       `JFS-${orderId}-${crypto.randomUUID()}`.slice(0, 36);
 

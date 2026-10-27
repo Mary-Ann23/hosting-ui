@@ -673,19 +673,20 @@ requestReferenceNumber: referenceNumber,
     };
 
     const response = await fetch(
-      `${baseUrl.replace(/\/+$/, "")}/checkout/v1/checkouts`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization:
-  "Basic " +
-  Buffer.from(`${process.env.MAYA_PUBLIC_KEY}:`).toString("base64")
-        
-
-        body: JSON.stringify(checkoutPayload)
-      }
-    );
+  `${baseUrl.replace(/\/+$/, "")}/checkout/v1/checkouts`,
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization:
+        "Basic " +
+        Buffer.from(
+          `${process.env.MAYA_PUBLIC_KEY}:`
+        ).toString("base64")
+    },
+    body: JSON.stringify(checkoutPayload)
+  }
+);
 
     const data = await response.json().catch(() => ({}));
 

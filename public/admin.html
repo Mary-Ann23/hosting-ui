@@ -517,6 +517,7 @@ function renderOrders() {
 
     actions.append(statusSelect, updateButton);
 
+    
     if (
       String(order.payment_method).toUpperCase() === "COD" &&
       String(order.payment_status).toUpperCase() !== "PAID"
@@ -528,9 +529,7 @@ function renderOrders() {
       paidButton.addEventListener("click", async () => {
         if (!confirm(
           `Confirm cash was received for order #${order.id}?`
-        )) {
-          return;
-        }
+        )) return;
 
         paidButton.disabled = true;
 
@@ -545,13 +544,16 @@ function renderOrders() {
 
           await loadOrders();
         } catch (error) {
-          message.textContent = "Payment update failed: " + error.message;
+          message.textContent =
+            "Payment update failed: " + error.message;
         } finally {
           paidButton.disabled = false;
         }
       });
-  
-    
+
+      actions.appendChild(paidButton);
+    }
+
     // Delete Order button for admin
     const deleteButton = document.createElement("button");
     deleteButton.className = "action-button";
@@ -564,9 +566,7 @@ function renderOrders() {
         `Permanently delete Order #${order.id}? This cannot be undone.`
       );
 
-      if (!confirmed) {
-        return;
-      }
+      if (!confirmed) return;
 
       deleteButton.disabled = true;
       deleteButton.textContent = "Deleting...";
@@ -596,12 +596,7 @@ function renderOrders() {
     ordersList.appendChild(card);
   });
 }
-", loadOrders);
-statusFilter.addEventListener("change", renderOrders);
 
-$("#storeButton").addEventListener("click", () => {
-  window.location.href = "/";
-});
   
 (async function initializeAdminDashboard() {
   const isAdmin = await checkAdmin();

@@ -541,16 +541,53 @@ function renderOrders() {
           paidButton.disabled = false;
         }
       });
+  
+    
+    // Delete Order button for admin
+    const deleteButton = document.createElement("button");
+    deleteButton.className = "action-button";
+    deleteButton.textContent = "Delete Order";
+    deleteButton.style.background = "#b42335";
+    deleteButton.style.color = "#fff";
 
-      actions.appendChild(paidButton);
-    }
+    deleteButton.addEventListener("click", async () => {
+      const confirmed = confirm(
+        `Permanently delete Order #${order.id}? This cannot be undone.`
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      deleteButton.disabled = true;
+      deleteButton.textContent = "Deleting...";
+
+      try {
+        await apiRequest(
+          `/api/admin/orders/${encodeURIComponent(order.id)}`,
+          { method: "DELETE" }
+        );
+
+        message.textContent =
+          `Order #${order.id} deleted successfully.`;
+
+        await loadOrders();
+      } catch (error) {
+        message.textContent =
+          "Delete failed: " + error.message;
+      } finally {
+        deleteButton.disabled = false;
+        deleteButton.textContent = "Delete Order";
+      }
+    });
+
+    actions.appendChild(deleteButton);
 
     card.appendChild(actions);
     ordersList.appendChild(card);
   });
 }
-
-refreshButton.addEventListener("click", loadOrders);
+", loadOrders);
 statusFilter.addEventListener("change", renderOrders);
 
 $("#storeButton").addEventListener("click", () => {

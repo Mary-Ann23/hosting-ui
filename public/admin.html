@@ -602,6 +602,15 @@ statusFilter.addEventListener("change", renderOrders);
 $("#storeButton").addEventListener("click", () => {
   window.location.href = "/";
 });
+  
+(async function initializeAdminDashboard() {
+  const isAdmin = await checkAdmin();
+
+  if (isAdmin) {
+    await loadOrders();
+  }
+})();
+
 
 (async function initAdmin() {
   const allowed = await checkAdmin();

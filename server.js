@@ -1253,13 +1253,14 @@ app.get("/api/db-check", requireAuth, async (req, res) => {
 app.post("/api/webhooks/maya", async (req, res) => {
   try {
     const event = req.body;
+const eventStatus = event?.paymentStatus || event?.status;
 
-    if (!event || !event.id || !event.paymentStatus) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid Maya webhook payload."
-      });
-    }
+if (!event || !event.id || !eventStatus) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid Maya webhook payload."
+  });
+}
 
     const publicKey = process.env.MAYA_PUBLIC_KEY;
     const baseUrl =

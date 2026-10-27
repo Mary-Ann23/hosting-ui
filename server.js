@@ -1245,6 +1245,130 @@ app.get("/api/db-check", requireAuth, async (req, res) => {
 });
 
 
+/* =========================================
+   MAYA CHECKOUT WEBHOOK
+   JABIÑAR FOOD STORE
+========================================= */
+
+app.post("/api/webhooks/maya", async (req, res) => {
+  try {
+    const event = req.body;
+
+    if (!event || !event.id || !event.paymentStatus) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Maya webhook payload."
+      });
+    }
+
+    const publicKey = process.env.MAYA_PUBLIC_KEY;
+    const baseUrl =
+      process.env.MAYA_BASE_URL ||
+      "https://pg-sandbox.paymaya.com";
+
+    if (!publicKey) {
+      console.error("MAYA_PUBLIC_KEY is not configured.");
+      return res.status(500).json({
+        success: false,
+        message: "Maya configuration is incomplete."
+      });
+    }
+
+    // Verify the payment status directly with Maya.
+    const auth = Buffer.from(`${publicKey}:`).toString("base64");
+
+    const verifyResponse = await fetch(
+      `${baseUrl}/payments/v1/payments/${encodeURIComponent(event.id)}/status`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Basic ${auth}`,
+          Accept: "application/json"
+        }
+      }
+    );
+
+    if (!verifyResponse.ok) {
+      console.error(
+        "Maya verification failed:",
+        verifyResponse.status
+      );
+
+      return res.status(502).json({
+        success: false,
+        message: "Unable to verify payment with Maya."
+      });
+    }
+
+    const verifiedPayment = await verifyResponse.json();
+    const verifiedStatus = verifiedPayment.paymentStatus;
+
+    // Only accept a status confirmed by Maya.
+    if (verifiedStatus !== "PAYMENT_SUCCESS") {
+      return res.status(200).json({
+        success: true,
+        message: "Payment is not confirmed as successful.",
+        paymentStatus: verifiedStatus || "UNKNOWN"
+      });
+    }
+
+    // Match the verified Maya payment to its stored order.
+    const result = await getPool().query(
+      `UPDATE orders
+       SET payment_status = 'PAID'
+       WHERE maya_checkout_id = $1
+         AND payment_method = 'MAYA'
+         AND payment_status <> 'PAID'
+       RETURNING id`,
+      [event.id]
+    );
+
+    if (result.rowCount === 0) {
+      // May already be processed, or no matching order exists.
+      const existing = await getPool().query(
+        `SELECT id, payment_status
+         FROM orders
+         WHERE maya_checkout_id = $1
+           AND payment_method = 'MAYA'
+         LIMIT 1`,
+        [event.id]
+      );
+
+      if (existing.rowCount === 0) {
+        console.error("No order found for Maya payment ID.");
+        return res.status(404).json({
+          success: false,
+          message: "No matching order found."
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Payment was already processed.",
+        orderId: existing.rows[0].id
+      });
+    }
+
+    console.log(
+      "Maya payment verified for order:",
+      result.rows[0].id
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Maya payment verified successfully.",
+      orderId: result.rows[0].id
+    });
+  } catch (error) {
+    console.error("Maya webhook error:", error.message);
+
+    return res.status(500).json({
+      success: false,
+      message: "Webhook processing failed."
+    });
+  }
+});
+
 // ========================================
 // SERVE FRONTEND FILES
 // ========================================

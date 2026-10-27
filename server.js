@@ -678,8 +678,8 @@ redirectUrl: {
         headers: {
           "Content-Type": "application/json",
           Authorization:
-            "Basic " +
-            Buffer.from(`${publicKey}:`).toString("base64")
+  "Basic " +
+  Buffer.from(`${process.env.MAYA_SECRET_KEY}:`).toString("base64")
         },
         body: JSON.stringify(checkoutPayload)
       }

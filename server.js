@@ -650,25 +650,26 @@ const orderId = order.id;
     line1: String(req.body.address || "").trim()
   }
 },
-      items: (req.body.items || []).map((item) => ({
-        name: String(item.name || "Store item"),
-        quantity: Number(item.quantity),
-        amount: {
-          value: Number(item.price),
-          currency: "PHP"
-        },
-        totalAmount: {
-          value: Number(item.price) * Number(item.quantity),
-          currency: "PHP"
-        }
-      })),
-      requestReferenceNumber: referenceNumber,
-      redirectUrl: {
-        success: `${appUrl}/?maya=success`,
-        failure: `${appUrl}/?maya=failure`,
-        cancel: `${appUrl}/?maya=cancel`
-      }
-    };
+      
+items: result.orderItems.map((item) => ({
+  name: String(item.name),
+  quantity: Number(item.quantity),
+  amount: {
+    value: Number(item.price),
+    currency: "PHP"
+  },
+  totalAmount: {
+    value: Number(item.price) * Number(item.quantity),
+    currency: "PHP"
+  }
+})),
+requestReferenceNumber: referenceNumber,
+redirectUrl: {
+  success: `${appUrl}/?maya=success`,
+  failure: `${appUrl}/?maya=failure`,
+  cancel: `${appUrl}/?maya=cancel`
+}
+
 
     const response = await fetch(
       `${baseUrl.replace(/\/+$/, "")}/checkout/v1/checkouts`,

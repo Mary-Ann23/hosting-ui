@@ -311,19 +311,25 @@ function addDetail(container, label, value) {
   container.appendChild(detail);
 }
 
+
 async function checkAdmin() {
   try {
     const data = await apiRequest("/api/auth/me");
     const user = data.user;
 
-    if (!user || user.is_admin !== true) {
-      document.body.innerHTML = `
-        <main style="font-family:Arial;padding:30px;text-align:center">
-          <h2>Admin access required</h2>
-          <p>Please log in using your administrator account.</p>
-          <button onclick="location.href='/'">Back to Login</button>
-        </main>
-      `;
+    const isAdmin =
+      user &&
+      (
+        user.is_admin === true ||
+        user.is_admin === 1 ||
+        user.is_admin === "true"
+      );
+
+    if (!isAdmin) {
+      message.textContent =
+        "Admin access required. Please use your administrator account.";
+
+      ordersList.replaceChildren();
       return false;
     }
 
@@ -331,12 +337,15 @@ async function checkAdmin() {
     return true;
   } catch (error) {
     message.textContent =
-      "Please log in first. " + error.message;
+      "Unable to verify admin access: " +
+      (error.message || "Please log in again.");
+
     ordersList.replaceChildren();
     return false;
   }
 }
 
+  
 async function loadOrders() {
   refreshButton.disabled = true;
   message.textContent = "Loading orders...";

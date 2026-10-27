@@ -641,15 +641,15 @@ const orderId = order.id;
         currency: "PHP"
       },
       buyer: {
-        firstName: String(req.body.fullName || "").trim(),
-        contact: {
-          phone: String(req.body.contactNumber || "").trim()
-        },
-        shippingAddress: {
-          firstName: String(req.body.fullName || "").trim(),
-          line1: String(req.body.deliveryAddress || "").trim()
-        }
-      },
+  firstName: String(req.body.full_name || "").trim(),
+  contact: {
+    phone: String(req.body.contact_number || "").trim()
+  },
+  shippingAddress: {
+    firstName: String(req.body.full_name || "").trim(),
+    line1: String(req.body.address || "").trim()
+  }
+},
       items: (req.body.items || []).map((item) => ({
         name: String(item.name || "Store item"),
         quantity: Number(item.quantity),

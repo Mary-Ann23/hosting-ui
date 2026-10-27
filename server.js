@@ -679,11 +679,8 @@ requestReferenceNumber: referenceNumber,
         headers: {
           "Content-Type": "application/json",
           Authorization:
-            "Basic " +
-            Buffer.from(
-              `${process.env.MAYA_SECRET_KEY}:`
-            ).toString("base64")
-        },
+  "Basic " +
+  Buffer.from(`${process.env.MAYA_PUBLIC_KEY}:`).toString("base64")
         
 
         body: JSON.stringify(checkoutPayload)

@@ -596,8 +596,13 @@ function renderOrders() {
     ordersList.appendChild(card);
   });
 }
+  refreshButton.addEventListener("click", loadOrders);
+statusFilter.addEventListener("change", renderOrders);
 
-  
+$("#storeButton").addEventListener("click", () => {
+  window.location.href = "/";
+});
+  }  
 (async function initializeAdminDashboard() {
   const isAdmin = await checkAdmin();
 

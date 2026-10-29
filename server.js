@@ -1290,15 +1290,18 @@ if (!event || !event.id || !eventStatus) {
     );
 
     if (!verifyResponse.ok) {
-      console.error(
-        "Maya verification failed:",
-        verifyResponse.status
-      );
+  const mayaError = await verifyResponse.text();
 
-      return res.status(502).json({
-        success: false,
-        message: "Unable to verify payment with Maya."
-      });
+  console.error("Maya verification failed:", {
+    status: verifyResponse.status,
+    response: mayaError
+  });
+
+  return res.status(502).json({
+    success: false,
+    message: "Unable to verify payment with Maya.",
+    mayaStatus: verifyResponse.status
+  });
     }
 
     const verifiedPayment = await verifyResponse.json();
